@@ -20,5 +20,4 @@ Questo progetto è un simulatore finanziario interattivo progettato per aiutare 
 
 ## Segnalazione Bug e Contributi:
 
-Per segnalare bug o suggerire nuove funzionalità, visita la sezione "Issues" del repository GitHub all'indirizzo:
-`https://github.com/nemorfol/fire-simulator/issues`
+*   **[Come Segnalare un Bug o Suggerire una Funzionalità](manuali/GUIDA_SEGNALAZIONE_BUG.md)**
