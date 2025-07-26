@@ -1,6 +1,6 @@
 ### Guida Rapida: Come Avviare il Progetto in Locale su Windows
 
-Una volta che hai clonato il progetto da GitHub, segui questi passaggi per farlo funzionare sulla tua macchina:
+Una volta che hai clonato il progetto da GitHub (da https://github.com/nemorfol/fire-simulator), segui questi passaggi per farlo funzionare sulla tua macchina:
 
 **1. Installa Node.js e npm (Node Package Manager)**
 
@@ -9,7 +9,7 @@ Una volta che hai clonato il progetto da GitHub, segui questi passaggi per farlo
     1.  Apri il tuo browser e vai sul sito ufficiale di Node.js: https://nodejs.org/en
     2.  Vedrai due versioni consigliate: "LTS" (Long Term Support) e "Current". Ti consiglio vivamente di scaricare la versione **LTS**, è la più stabile e raccomandata per la maggior parte degli utenti.
     3.  Scarica l'installer `.msi` per Windows.
-    4.  Esegui l'installer scaricato. Segui le istruzioni a schermo, accettando i termini di licenza e lasciando le opzioni di installazione predefinite (inclusa l'installazione di npm).
+    4.  Esegui l'installer scaricato. Segui le istruzioni a schermo, accettando i termini di licenza e lasciando le opzioni di installazione predefinite (inclusa l'installatione di npm).
 
 *   **Verifica l'installazione:**
     1.  Apri il "Prompt dei comandi" di Windows (cerca `cmd` nel menu Start).

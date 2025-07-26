@@ -21,9 +21,9 @@ Questo metodo è ideale se hai familiarità con Git e intendi contribuire al pro
     ```
 
 4.  **Clona il Repository:**
-    Sostituisci `TUO_USERNAME` e `NOME_DEL_REPOSITORY` con i dati corretti del progetto (che ti verranno forniti).
+    L'URL del repository è: `https://github.com/nemorfol/fire-simulator`
     ```bash
-    git clone https://github.com/TUO_USERNAME/NOME_DEL_REPOSITORY.git
+    git clone https://github.com/nemorfol/fire-simulator.git
     ```
     Questo creerà una nuova cartella con il nome del repository e scaricherà tutti i file del progetto al suo interno.
 
@@ -32,8 +32,7 @@ Questo metodo è ideale se hai familiarità con Git e intendi contribuire al pro
 Questo metodo è più semplice se non hai bisogno di usare Git o di contribuire al progetto, ma vuoi solo una copia dei file.
 
 1.  **Vai alla Pagina del Repository:**
-    Apri il tuo browser web e vai all'URL del repository GitHub del progetto (che ti verrà fornito).
-    Esempio: `https://github.com/TUO_USERNAME/NOME_DEL_REPOSITORY`
+    Apri il tuo browser web e vai all'URL del repository GitHub del progetto: `https://github.com/nemorfol/fire-simulator`
 
 2.  **Scarica il File ZIP:**
     Sulla pagina del repository, cerca un pulsante verde con l'etichetta "**< > Code**" (o "Code").
