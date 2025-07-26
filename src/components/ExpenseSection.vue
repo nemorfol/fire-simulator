@@ -57,7 +57,15 @@ function removeRiga(type, index) {
 
 function updateUscitaRicorrente(index, field, value) {
   const newUscite = [...props.usciteRicorrenti];
-  newUscite[index][field] = value;
+  if (field === 'valore' || field === 'incr' || field === 'inflazioneSpecifica') {
+    const parsedValue = parseFloat(value);
+    newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else if (field === 'inizio' || field === 'fine') {
+    const parsedValue = parseInt(value);
+    newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else {
+    newUscite[index][field] = value;
+  }
   emit('update:usciteRicorrenti', newUscite);
   if (field === 'valore' || field === 'inizio' || field === 'fine' || field === 'desc') {
     emit('expenses-updated');
@@ -66,7 +74,15 @@ function updateUscitaRicorrente(index, field, value) {
 
 function updateUscitaLumpSum(index, field, value) {
   const newUscite = [...props.usciteLumpSum];
-  newUscite[index][field] = value;
+  if (field === 'importo') {
+    const parsedValue = parseFloat(value);
+    newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else if (field === 'anno') {
+    const parsedValue = parseInt(value);
+    newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else {
+    newUscite[index][field] = value;
+  }
   emit('update:usciteLumpSum', newUscite);
 }
 </script>
@@ -102,6 +118,7 @@ function updateUscitaLumpSum(index, field, value) {
                   class="desc"
                   :value="uscita.desc"
                   @input="updateUscitaRicorrente(index, 'desc', $event.target.value)"
+                  list="expense-descriptions"
                 />
               </td>
               <td>
@@ -238,6 +255,26 @@ function updateUscitaLumpSum(index, field, value) {
         Aggiungi Lump Sum
       </button>
     </div>
+    <datalist id="expense-descriptions">
+      <option value="Affitto/Mutuo"></option>
+      <option value="Spese Alimentari"></option>
+      <option value="Trasporti"></option>
+      <option value="Utenze"></option>
+      <option value="Assicurazioni"></option>
+      <option value="Intrattenimento"></option>
+      <option value="Salute"></option>
+      <option value="Istruzione"></option>
+      <option value="Abbigliamento"></option>
+      <option value="Viaggi"></option>
+      <option value="Regali"></option>
+      <option value="Manutenzione Casa"></option>
+      <option value="Auto"></option>
+      <option value="Tasse"></option>
+      <option value="Vacanza"></option>
+      <option value="Acquisto Auto"></option>
+      <option value="Ristrutturazione Casa"></option>
+      <option value="Spese Mediche Straordinarie"></option>
+    </datalist>
   </div>
 </template>
 

@@ -39,13 +39,29 @@ function handleToggleAliquotaSost(event) {
 
 function updateEntrataRicorrente(index, field, value) {
   const newEntrate = [...props.entrateRicorrenti];
-  newEntrate[index][field] = value;
+  if (field === 'valore' || field === 'aliquotaSost' || field === 'incr') {
+    const parsedValue = parseFloat(value);
+    newEntrate[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else if (field === 'inizio' || field === 'fine') {
+    const parsedValue = parseInt(value);
+    newEntrate[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else {
+    newEntrate[index][field] = value;
+  }
   emit('update:entrateRicorrenti', newEntrate);
 }
 
 function updateEntrataLumpSum(index, field, value) {
   const newEntrate = [...props.entrateLumpSum];
-  newEntrate[index][field] = value;
+  if (field === 'importo') {
+    const parsedValue = parseFloat(value);
+    newEntrate[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else if (field === 'anno') {
+    const parsedValue = parseInt(value);
+    newEntrate[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else {
+    newEntrate[index][field] = value;
+  }
   emit('update:entrateLumpSum', newEntrate);
 }
 </script>
@@ -59,15 +75,15 @@ function updateEntrataLumpSum(index, field, value) {
         <table class="w-full text-sm min-w-[1200px]">
           <thead class="table-header">
             <tr>
-              <th>Descrizione</th>
-              <th>Valore Annuo (€)</th>
-              <th>Valore Odierno?</th>
-              <th>Regime Fiscale</th>
-              <th>Aliquota Sost. (%)</th>
-              <th>Inizio</th>
-              <th>Fine</th>
-              <th>Incr. (%)</th>
-              <th>In Pensione?</th>
+              <th title="Descrizione dell'entrata (es. Stipendio, Affitto).">Descrizione</th>
+              <th title="Valore annuale dell'entrata in Euro.">Valore Annuo (€)</th>
+              <th title="Indica se il valore dell'entrata è espresso in valuta odierna e verrà adeguato all'inflazione.">Valore Odierno?</th>
+              <th title="Regime fiscale applicato all'entrata (Ordinaria, Sostitutiva, Esente).">Regime Fiscale</th>
+              <th title="Aliquota percentuale se il regime fiscale è 'Sostitutiva'.">Aliquota Sost. (%)</th>
+              <th title="Età o anno di inizio dell'entrata.">Inizio</th>
+              <th title="Età o anno di fine dell'entrata.">Fine</th>
+              <th title="Incremento percentuale annuo dell'entrata.">Incr. (%)</th>
+              <th title="Indica se l'entrata continua anche durante la fase di pensione.">In Pensione?</th>
               <th></th>
             </tr>
           </thead>
@@ -83,6 +99,7 @@ function updateEntrataLumpSum(index, field, value) {
                   class="desc"
                   :value="entrata.desc"
                   @input="updateEntrataRicorrente(index, 'desc', $event.target.value); handleUpdateGoalSeekOptions()"
+                  list="income-descriptions"
                 />
               </td>
               <td>
@@ -180,10 +197,10 @@ function updateEntrataLumpSum(index, field, value) {
         <table class="w-full text-sm">
           <thead class="table-header">
             <tr>
-              <th>Descrizione</th>
-              <th>Importo (€)</th>
-              <th>Valore Odierno?</th>
-              <th>Anno Ricezione</th>
+              <th title="Descrizione dell'entrata una tantum.">Descrizione</th>
+              <th title="Importo dell'entrata una tantum in Euro.">Importo (€)</th>
+              <th title="Indica se l'importo è espresso in valuta odierna e verrà adeguato all'inflazione.">Valore Odierno?</th>
+              <th title="Anno in cui si riceve l'entrata una tantum.">Anno Ricezione</th>
               <th></th>
             </tr>
           </thead>
@@ -239,6 +256,16 @@ function updateEntrataLumpSum(index, field, value) {
         Aggiungi Lump Sum
       </button>
     </div>
+    <datalist id="income-descriptions">
+      <option value="Stipendio"></option>
+      <option value="Affitto"></option>
+      <option value="Dividendi"></option>
+      <option value="Interessi"></option>
+      <option value="Pensione"></option>
+      <option value="Bonus"></option>
+      <option value="Eredità"></option>
+      <option value="Vendita Proprietà"></option>
+    </datalist>
   </div>
 </template>
 

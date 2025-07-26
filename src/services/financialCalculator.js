@@ -12,7 +12,7 @@ export function leggiInput(formInputs) {
       isRetirement: formInputs.isRetirement,
       strategiaPrelievo: formInputs.strategiaPrelievo,
       percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,
-      percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,
+      scenarioCrisi: formInputs.scenarioCrisi,
       rendimentoCapitale: formInputs.assetAllocation.reduce(
         (sum, asset) =>
           sum + (parseFloat(asset.quota) / 100) * parseFloat(asset.rendimento),

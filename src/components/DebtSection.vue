@@ -32,7 +32,14 @@ function rimuoviDebito(index) {
 
 function updateDebitoField(event, index, field) {
   const newDebts = [...props.modelValue];
-  newDebts[index][field] = event.target.value;
+  let value = event.target.value;
+
+  if (field === 'importoIniziale' || field === 'tassoInteresse' || field === 'durataAnni' || field === 'annoInizio') {
+    const parsedValue = parseFloat(value);
+    value = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  }
+
+  newDebts[index][field] = value;
   emit('update:modelValue', newDebts);
 }
 </script>

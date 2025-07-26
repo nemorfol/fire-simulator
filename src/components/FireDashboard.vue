@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed } from 'vue';
+import { defineProps, computed, defineEmits } from 'vue';
 
 const props = defineProps({
   simMode: {
@@ -19,8 +19,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+const emit = defineEmits(['view-details']);
 </script>
-});
 
 <template>
   <div id="fire-dashboard" class="card bg-teal-50 border-2 border-teal-200">
@@ -66,6 +67,11 @@ const props = defineProps({
           Non raggiunto in questa simulazione
         </p>
       </div>
+    </div>
+    <div class="text-center mt-4">
+      <button @click="emit('view-details')" class="btn btn-primary">
+        Visualizza Dettagli Simulazione
+      </button>
     </div>
   </div>
 </template>

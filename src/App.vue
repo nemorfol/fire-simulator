@@ -9,7 +9,6 @@ import IncomeSection from "./components/IncomeSection.vue";
 import ExpenseSection from "./components/ExpenseSection.vue";
 import NotificationModal from "./components/NotificationModal.vue";
 import AppLoader from "./components/AppLoader.vue";
-import SimulatorGuide from "./components/SimulatorGuide.vue";
 import FireDashboard from "./components/FireDashboard.vue";
 import MonteCarloDashboard from "./components/MonteCarloDashboard.vue";
 import WorstCaseChart from './components/WorstCaseChart.vue';
@@ -27,6 +26,7 @@ import { importaCSV as importCsvService, esportaCSV as exportCsvService, esporta
 import { popolaDatiIniziali as initializeDataService } from "./services/initializationService.js";
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
+import { generateSimulationReport } from "./services/pdfGeneratorService.js";
 
 // Funzioni di utilità
 const formatterValuta = new Intl.NumberFormat("it-IT", {
@@ -172,11 +172,12 @@ const formInputs = reactive({
   regolaFIRE: 4,
   tassazioneRendite: 26,
   etaRitiro: 65,
-  numeroSimulazioni: 500,
+  numeroSimulazioni: 1000,
   simMode: "deterministic",
   isRetirement: false,
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
+  scenarioCrisi: 'none', // Nuovo campo per la selezione dello scenario di crisi
   taxBrackets: reactive([
     { finoA: 28000, aliquota: 23 },
     { finoA: 50000, aliquota: 35 },
@@ -213,6 +214,7 @@ const scenarioA = ref(null);
 const ultimoRisultato = ref(null);
 const monteCarloSummaryResults = ref(null);
 const chartLabels = ref([]);
+const showDetailedResults = ref(false); // Nuova variabile reattiva
 
 // Computed properties
 const numeroFIRE = computed(() => {
@@ -367,6 +369,10 @@ function handleExportCashFlowExcel() {
   exportCashFlowExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
+function handleExportPdf() {
+  generateSimulationReport(formInputs, ultimoRisultato.value, datiFIRE.value, monteCarloSummaryResults.value, formatterValuta);
+}
+
 // Funzione di Goal Seek (delegate al servizio goalSeekService)
 async function handleExecuteGoalSeek() {
   await executeGoalSeekService(formInputs, loaderHidden, mostraNotifica);
@@ -389,46 +395,7 @@ async function handleAvviaSimulazione() {
     mostraNotifica
   );
 
-  if (formInputs.simMode === 'montecarlo') {
-    const capitalResults = res.map(sim => sim.map(r => r.capitaleFinale));
-    const years = res[0].map(r => r.anno);
-    const p25 = [];
-    const p50 = [];
-    const p75 = [];
-
-    for (let i = 0; i < years.length; i++) {
-      const values = capitalResults.map(sim => sim[i]).sort((a, b) => a - b);
-      p25.push(values[Math.floor(values.length * 0.25)]);
-      p50.push(values[Math.floor(values.length * 0.5)]);
-      p75.push(values[Math.floor(values.length * 0.75)]);
-    }
-
-    datasetsCapitale.value = [
-      {
-        label: '25° percentile',
-        data: p25,
-        fill: false,
-        borderColor: 'rgba(255, 99, 132, 0.2)',
-        tension: 0.1,
-      },
-      {
-        label: 'Mediana (50° percentile)',
-        data: p50,
-        fill: 'start',
-        borderColor: 'rgb(75, 192, 192)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.1,
-      },
-      {
-        label: '75° percentile',
-        data: p75,
-        fill: '-1',
-        borderColor: 'rgba(255, 99, 132, 0.2)',
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-        tension: 0.1,
-      },
-    ];
-  } else {
+  if (formInputs.simMode !== 'montecarlo') {
     datasetsCapitale.value = [
       {
         label: 'Scenario Corrente',
@@ -459,7 +426,14 @@ function handleShowSankey(data) {
   window.open('/chart.html', '_blank', 'width=820,height=450,resizable=yes,scrollbars=yes');
 }
 
+function handleViewDetails() {
+  showDetailedResults.value = true;
+}
 
+function openGuide() {
+  
+  window.open('/guide.html', '_blank', 'width=800,height=600,resizable=yes,scrollbars=yes');
+}
 
 // Lifecycle hook
 onMounted(() => {
@@ -482,12 +456,12 @@ onMounted(() => {
       </h1>
       <p class="mt-2 text-lg text-gray-600">
         Analizza, confronta e pianifica il tuo percorso verso l'indipendenza
-        finanziaria.
+        financiaria.
       </p>
+      <button @click="openGuide" class="btn btn-sm btn-info mt-4">Guida Dettagliata</button>
     </header>
 
-    <!-- Guida al Simulatore -->
-    <SimulatorGuide />
+    
 
     <!-- Sezione Parametri -->
     <div id="parameters">
@@ -535,12 +509,14 @@ onMounted(() => {
 
     <div id="results" v-show="showResults">
       <SummaryDashboard
+        v-if="formInputs.simMode === 'montecarlo' && monteCarloSummaryResults"
         :simMode="formInputs.simMode"
         :numeroFIRE="numeroFIRE"
         :datiFIRE="datiFIRE"
         :monteCarloSummaryResults="monteCarloSummaryResults"
         :ultimoRisultato="ultimoRisultato"
         :formatterValuta="formatterValuta"
+        @view-details="handleViewDetails"
       />
       <h2 class="section-title">Risultati della Simulazione</h2>
       <div
@@ -552,73 +528,78 @@ onMounted(() => {
         :numeroFIRE="numeroFIRE"
         :datiFIRE="datiFIRE"
         :formatterValuta="formatterValuta"
+        @view-details="handleViewDetails"
       />
       <MonteCarloDashboard
         :simMode="formInputs.simMode"
         :monteCarloSummaryResults="monteCarloSummaryResults"
       />
       <div class="card mt-8" v-if="formInputs.simMode === 'montecarlo'">
-        <WorstCaseChart :worst-case-scenario="monteCarloSummaryResults?.worstCase" />
+        <WorstCaseChart :worst-case-scenario="monteCarloSummaryResults?.worstCase?.datiSimulazione" />
       </div>
       <StressTestDashboard
         :stressTestResult="stressTestResult"
         :formatterValuta="formatterValuta"
       />
       <SuggestionsCard :suggestions="suggestions" />
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="card">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="card-title mb-0">Andamento del Capitale nel Tempo</h3>
-            <button
-              @click="handleExportCapitalExcel()"
-              class="btn btn-secondary btn-sm"
-            >
-              Esporta in Excel
-            </button>
+      <div v-show="showDetailedResults"> <!-- Contenitore per i risultati dettagliati -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="card-title mb-0">Andamento del Capitale nel Tempo</h3>
+              <button
+                @click="handleExportCapitalExcel()"
+                class="btn btn-secondary btn-sm"
+              >
+                Esporta in Excel
+              </button>
+            </div>
+            <div class="relative h-96 md:h-[450px]">
+              <CapitalChart
+                :labels="
+                  formInputs.simMode === 'montecarlo'
+                    ? (ultimoRisultato && ultimoRisultato.length > 0 && Array.isArray(ultimoRisultato[0]) ? ultimoRisultato[0].map((r) => r.anno) : [])
+                    : (ultimoRisultato ? ultimoRisultato.map((r) => r.anno) : [])
+                "
+                :datasets="datasetsCapitale"
+              />
+            </div>
           </div>
-          <div class="relative h-96 md:h-[450px]">
-            <CapitalChart
-              :labels="
-                formInputs.simMode === 'montecarlo'
-                  ? (ultimoRisultato && ultimoRisultato.length > 0 && Array.isArray(ultimoRisultato[0]) ? ultimoRisultato[0].map((r) => r.anno) : [])
-                  : (ultimoRisultato ? ultimoRisultato.map((r) => r.anno) : [])
-              "
-              :datasets="datasetsCapitale"
+          <div id="details-charts-card" class="card" v-if="formInputs.simMode !== 'montecarlo'">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="card-title mb-0">
+                Andamento Flussi di Cassa (Scenario Corrente)
+              </h3>
+              <button
+                @click="handleExportCashFlowExcel()"
+                class="btn btn-secondary btn-sm"
+              >
+                Esporta in Excel
+              </button>
+            </div>
+            <div class="relative h-96 md:h-[450px]">
+              <CashFlowChart :risultati="ultimoRisultato" />
+            </div>
+          </div>
+        </div>
+        <div id="dettaglio-annuale-card" class="card mt-8" v-if="formInputs.simMode !== 'montecarlo'">
+          <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
+          <button @click="handleExportExcel()" class="btn btn-secondary mb-4">
+            Esporta in Excel
+          </button>
+          <button @click="handleExportPdf()" class="btn btn-secondary mb-4 ml-2">
+            Esporta in PDF
+          </button>
+          <AnnualDetailTable
+              :risultatiHeader="risultatiHeader"
+              :risultatiBody="risultatiBody"
+              :datiFIRE="datiFIRE"
+              :formatterValuta="formatterValuta"
+              @show-sankey="handleShowSankey"
             />
           </div>
         </div>
-        <div id="details-charts-card" class="card" v-if="formInputs.simMode !== 'montecarlo'">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="card-title mb-0">
-              Andamento Flussi di Cassa (Scenario Corrente)
-            </h3>
-            <button
-              @click="handleExportCashFlowExcel()"
-              class="btn btn-secondary btn-sm"
-            >
-              Esporta in Excel
-            </button>
-          </div>
-          <div class="relative h-96 md:h-[450px]">
-            <CashFlowChart :risultati="ultimoRisultato" />
-          </div>
-        </div>
-      </div>
-      <div id="dettaglio-annuale-card" class="card mt-8" v-if="formInputs.simMode !== 'montecarlo'">
-        <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
-        <button @click="handleExportExcel()" class="btn btn-secondary mb-4">
-          Esporta in Excel
-        </button>
-        <AnnualDetailTable
-            :risultatiHeader="risultatiHeader"
-            :risultatiBody="risultatiBody"
-            :datiFIRE="datiFIRE"
-            :formatterValuta="formatterValuta"
-            @show-sankey="handleShowSankey"
-          />
-        </div>
-      </div>
-  </div>
+    </div>
 
   <NotificationModal
     :hidden="notificationModalHidden"
@@ -629,6 +610,7 @@ onMounted(() => {
   />
 
   <AppLoader :hidden="loaderHidden" />
+</div>
 </template>
 
 <style></style>

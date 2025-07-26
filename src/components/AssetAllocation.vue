@@ -27,8 +27,19 @@ const totalAllocationClass = computed(() => {
 });
 
 function updateAssetQuota(event, index) {
+  updateAssetField(event, index, 'quota');
+}
+
+function updateAssetField(event, index, field) {
   const newAssets = [...props.modelValue];
-  newAssets[index].quota = parseFloat(event.target.value);
+  let value = event.target.value;
+
+  if (field === 'quota' || field === 'rendimento' || field === 'devStd' || field === 'tassazioneSpecifica') {
+    const parsedValue = parseFloat(value);
+    value = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  }
+
+  newAssets[index][field] = value;
   emit('update:modelValue', newAssets);
 }
 
@@ -83,7 +94,8 @@ function rimuoviAsset(index) {
               <input
                 type="number"
                 class="asset-rendimento"
-                v-model="modelValue[index].rendimento"
+                :value="asset.rendimento"
+                @input="updateAssetField($event, index, 'rendimento')"
                 step="0.1"
               />
             </td>
@@ -91,7 +103,8 @@ function rimuoviAsset(index) {
               <input
                 type="number"
                 class="asset-devstd"
-                v-model="modelValue[index].devStd"
+                :value="asset.devStd"
+                @input="updateAssetField($event, index, 'devStd')"
                 step="0.1"
               />
             </td>
@@ -106,7 +119,8 @@ function rimuoviAsset(index) {
               <input
                 type="number"
                 class="asset-tassazione-specifica"
-                v-model="modelValue[index].tassazioneSpecifica"
+                :value="asset.tassazioneSpecifica"
+                @input="updateAssetField($event, index, 'tassazioneSpecifica')"
                 step="0.1"
               />
             </td>

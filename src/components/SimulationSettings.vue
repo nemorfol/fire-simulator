@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, watch, ref } from 'vue';
+import { defineProps, defineEmits, computed } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -10,28 +10,18 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 
-const localFormInputs = ref(props.modelValue);
-
-watch(localFormInputs, (newValue) => {
-  emit('update:modelValue', newValue);
-}, { deep: true });
-
-const showMonteCarloParams = ref(localFormInputs.value.simMode === 'montecarlo');
-const showFaseRitiroParams = ref(localFormInputs.value.isRetirement);
-
-watch(() => localFormInputs.value.simMode, (newMode) => {
-  showMonteCarloParams.value = newMode === 'montecarlo';
+const localFormInputs = computed({
+  get() {
+    return props.modelValue;
+  },
+  set(value) {
+    emit('update:modelValue', value);
+  }
 });
 
-watch(() => localFormInputs.value.isRetirement, (isRetirement) => {
-  showFaseRitiroParams.value = isRetirement;
-});
-
-const showPercentualePrelievo = ref(localFormInputs.value.strategiaPrelievo === 'percentualeCostante');
-
-watch(() => localFormInputs.value.strategiaPrelievo, (newStrategy) => {
-  showPercentualePrelievo.value = newStrategy === 'percentualeCostante';
-});
+const showMonteCarloParams = computed(() => localFormInputs.value.simMode === 'montecarlo');
+const showFaseRitiroParams = computed(() => localFormInputs.value.isRetirement);
+const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPrelievo === 'percentualeCostante');
 
 </script>
 
@@ -42,33 +32,19 @@ watch(() => localFormInputs.value.strategiaPrelievo, (newStrategy) => {
       <!-- Riga 1 -->
       <div class="p-2 bg-gray-200 rounded-lg col-span-1 md:col-span-2">
         <label for="sim-mode" class="block text-center font-bold mb-2">Modalità Simulazione</label>
-        <select id="sim-mode" class="w-full" v-model="localFormInputs.simMode">
+        <select id="sim-mode" class="w-full" v-model="localFormInputs.simMode" title="Seleziona la modalità di simulazione: Deterministica per proiezioni fisse, Monte Carlo per analisi di probabilità, Backtest Storico per scenari passati.">
           <option value="deterministic">Deterministica</option>
           <option value="montecarlo">Monte Carlo</option>
           <option value="backtest">Backtest Storico</option>
         </select>
       </div>
-      <div
-        class="p-2 bg-gray-200 rounded-lg col-span-1 md:col-span-2 flex items-center justify-center space-x-4"
-      >
-        <span class="font-bold text-gray-700">Accumulo</span>
-        <div class="flex flex-col items-center">
-          <span class="font-bold text-teal-700">Fase di Ritiro</span>
-          <label
-            for="retirement-toggle"
-            class="relative inline-flex items-center cursor-pointer mt-1"
-          >
-            <input
-              type="checkbox"
-              id="retirement-toggle"
-              class="sr-only peer"
-              v-model="localFormInputs.isRetirement"
-            />
-            <div
-              class="w-14 h-7 bg-gray-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-teal-600"
-            ></div>
-          </label>
-        </div>
+      <div class="p-2 bg-gray-200 rounded-lg col-span-1 md:col-span-2" v-show="localFormInputs.simMode !== 'montecarlo'">
+        <label for="scenarioCrisi" class="block text-center font-bold mb-2">Scenario di Crisi</label>
+        <select id="scenarioCrisi" class="w-full" v-model="localFormInputs.scenarioCrisi" title="Applica uno scenario di crisi storico per testare la resilienza del tuo piano finanziario.">
+          <option value="none">Nessuno</option>
+          <option value="dotCom">Dot-com Bubble (2000-2002)</option>
+          <option value="greatRecession">Grande Recessione (2008-2009)</option>
+        </select>
       </div>
 
       <!-- Riga 2 -->
@@ -104,6 +80,7 @@ watch(() => localFormInputs.value.strategiaPrelievo, (newStrategy) => {
           id="regolaFIRE"
           v-model="localFormInputs.regolaFIRE"
           step="0.1"
+          title="La percentuale del capitale iniziale che puoi prelevare annualmente senza esaurire i fondi, secondo la regola del 4% (o simile)."
         />
       </div>
 
@@ -115,6 +92,7 @@ watch(() => localFormInputs.value.strategiaPrelievo, (newStrategy) => {
           id="tassazioneRendite"
           v-model="localFormInputs.tassazioneRendite"
           step="0.1"
+          title="La percentuale di tassazione applicata annualmente sui rendimenti del tuo capitale investito."
         />
       </div>
       <div id="fase-ritiro-params" v-show="showFaseRitiroParams">
@@ -166,6 +144,7 @@ watch(() => localFormInputs.value.strategiaPrelievo, (newStrategy) => {
           id="numeroSimulazioni"
           v-model="localFormInputs.numeroSimulazioni"
           step="100"
+          title="Il numero di simulazioni Monte Carlo da eseguire per calcolare la probabilità di successo del tuo piano finanziario."
         />
       </div>
       <div>

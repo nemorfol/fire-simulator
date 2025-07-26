@@ -1,5 +1,5 @@
 <script setup>
-import { defineProps, computed } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
   simMode: {
@@ -28,6 +28,8 @@ const props = defineProps({
   }
 });
 
+const emit = defineEmits(['view-details']);
+
 const capitaleFinaleSimulazione = computed(() => {
   if (props.ultimoRisultato && props.ultimoRisultato.length > 0) {
     return props.ultimoRisultato[props.ultimoRisultato.length - 1].capitaleFinale;
@@ -54,7 +56,7 @@ const statoRaggiungimentoFIRE = computed(() => {
 
 const probSuccessoMonteCarlo = computed(() => {
   if (props.simMode === 'montecarlo' && props.monteCarloSummaryResults) {
-    return `${props.monteCarloSummaryResults.probabilitaSuccesso.toFixed(2)}%`;
+    return props.monteCarloSummaryResults.probabilitaSuccesso;
   }
   return 'N/A';
 });
@@ -65,6 +67,13 @@ const etaMediaEsaurimentoMonteCarlo = computed(() => {
   }
   return 'N/A';
 });
+
+const formattedSimMode = computed(() => {
+  if (typeof props.simMode === 'string' && props.simMode.length > 0) {
+    return props.simMode.charAt(0).toUpperCase() + props.simMode.slice(1);
+  }
+  return '';
+});
 </script>
 
 <template>
@@ -73,7 +82,7 @@ const etaMediaEsaurimentoMonteCarlo = computed(() => {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       <div class="summary-item">
         <p class="text-blue-600 font-semibold">Modalità Simulazione:</p>
-        <p class="text-blue-900 font-bold">{{ simMode.charAt(0).toUpperCase() + simMode.slice(1) }}</p>
+        <p class="text-blue-900 font-bold">{{ formattedSimMode || 'N/A' }}</p>
       </div>
 
       <div v-if="simMode !== 'montecarlo'" class="summary-item">
@@ -100,6 +109,11 @@ const etaMediaEsaurimentoMonteCarlo = computed(() => {
         <p class="text-blue-600 font-semibold">Numero FIRE Target:</p>
         <p class="text-blue-900 font-bold">{{ formatterValuta.format(numeroFIRE) }}</p>
       </div>
+    </div>
+    <div class="text-center mt-4">
+      <button @click="emit('view-details')" class="btn btn-primary">
+        Visualizza Risultati Dettagliati
+      </button>
     </div>
   </div>
 </template>
