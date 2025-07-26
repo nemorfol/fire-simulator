@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sankey Chart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+    </style>
+    </head>
+  <body>
+    <div id="chart"></div>
+    <script>
+      const SankeyChart = {
+        template: `<div><svg ref="svgElement"></svg></div>`,
+        props: ['data'],
+        mounted() {
+          this.drawSankey();
+        },
+        watch: {
+          data: 'drawSankey'
+        },
+        methods: {
+          drawSankey() {
+            if (!this.data || !this.$refs.svgElement) return;
+            const { nodes, links } = JSON.parse(JSON.stringify(this.data));
+            const width = 800;
+            const height = 400;
+            const svg = d3.select(this.$refs.svgElement).attr('width', width).attr('height', height);
+            svg.selectAll('*').remove();
+            const sankeyGenerator = d3.sankey().nodeWidth(15).nodePadding(10).extent([[1, 1], [width - 1, height - 6]]);
+            const { nodes: graphNodes, links: graphLinks } = sankeyGenerator({ nodes, links });
+            svg.append('g').selectAll('rect').data(graphNodes).join('rect').attr('x', d => d.x0).attr('y', d => d.y0).attr('height', d => d.y1 - d.y0).attr('width', d => d.x1 - d.x0).attr('fill', '#69b3a2');
+            svg.append('g').attr('fill', 'none').attr('stroke-opacity', 0.5).selectAll('g').data(graphLinks).join('path').attr('d', d3.sankeyLinkHorizontal()).attr('stroke', '#000').attr('stroke-width', d => Math.max(1, d.width));
+            svg.append('g').style('font', '10px sans-serif').selectAll('text').data(graphNodes).join('text').attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6).attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em').attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end').text(d => d.name);
+          }
+        }
+      };
+
+      const app = Vue.createApp({
+        components: { SankeyChart },
+        data() {
+          return {
+            sankeyData: null
+          };
+        },
+        mounted() {
+          this.sankeyData = JSON.parse(localStorage.getItem('sankeyData'));
+        },
+        template: `<SankeyChart :data="sankeyData" />`
+      });
+
+      app.mount('#chart');
+    </script>
+  </body>
+</html>

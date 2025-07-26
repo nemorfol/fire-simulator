@@ -1,0 +1,75 @@
+<script setup>
+import { defineProps, computed } from 'vue';
+
+const props = defineProps({
+  simMode: {
+    type: String,
+    required: true,
+  },
+  numeroFIRE: {
+    type: Number,
+    required: true,
+  },
+  datiFIRE: {
+    type: Object,
+    default: null,
+  },
+  formatterValuta: {
+    type: Object,
+    required: true,
+  },
+});
+</script>
+});
+
+<template>
+  <div id="fire-dashboard" class="card bg-teal-50 border-2 border-teal-200">
+    <h3 class="card-title">
+      Dashboard Obiettivo F.I.R.E. ({{
+        simMode === "backtest"
+          ? "Backtest Storico"
+          : "Deterministica"
+      }})
+    </h3>
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-center"
+    >
+      <div>
+        <p class="text-sm text-gray-600">Numero FIRE</p>
+        <p class="text-2xl font-bold text-teal-700">
+          {{ formatterValuta.format(numeroFIRE) }}
+        </p>
+      </div>
+      <template v-if="datiFIRE">
+        <div>
+          <p class="text-sm text-gray-600">Obiettivo Raggiunto</p>
+          <p class="text-2xl font-bold text-green-600">
+            Anno {{ datiFIRE.anno }}
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Et Ritiro Prevista</p>
+          <p class="text-2xl font-bold text-green-600">
+            {{ datiFIRE.eta }} anni
+          </p>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Capitale al Ritiro</p>
+          <p class="text-2xl font-bold text-green-600">
+            {{ formatterValuta.format(datiFIRE.capitaleFinale) }}
+          </p>
+        </div>
+      </template>
+      <div v-else class="md:col-span-3">
+        <p class="text-sm text-gray-600">Obiettivo Raggiunto</p>
+        <p class="text-2xl font-bold text-red-600">
+          Non raggiunto in questa simulazione
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* Stili specifici per FireDashboard.vue */
+</style>
