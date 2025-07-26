@@ -36,7 +36,7 @@ function handleExecuteGoalSeek() {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
       <div>
         <label for="goal-seek-target" class="block text-sm mb-1"
-          >Obiettivo: Raggiungere FIRE a (et)</label
+          >Obiettivo: Raggiungere FIRE a (eta)</label
         ><input
           type="number"
           id="goal-seek-target"
