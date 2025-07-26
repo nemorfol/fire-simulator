@@ -1,0 +1,48 @@
+### Guida Rapida: Come Ottenere il Progetto da GitHub
+
+Ci sono due modi principali per scaricare il progetto dal repository GitHub:
+
+**Metodo 1: Clonare il Repository (Consigliato per Sviluppatori)**
+
+Questo metodo è ideale se hai familiarità con Git e intendi contribuire al progetto o mantenerlo aggiornato facilmente.
+
+1.  **Installa Git:**
+    Se non hai già Git installato, scaricalo dal sito ufficiale: https://git-scm.com/downloads
+    Segui le istruzioni di installazione, lasciando le opzioni predefinite.
+
+2.  **Apri il Terminale/Prompt dei Comandi:**
+    Cerca "Git Bash" (se lo hai installato con Git) o il "Prompt dei comandi" di Windows nel menu Start.
+
+3.  **Naviga alla directory dove vuoi salvare il progetto:**
+    Ad esempio, se vuoi salvarlo in `F:\Progetti`, digita:
+    ```bash
+    F:
+    cd \Progetti
+    ```
+
+4.  **Clona il Repository:**
+    Sostituisci `TUO_USERNAME` e `NOME_DEL_REPOSITORY` con i dati corretti del progetto (che ti verranno forniti).
+    ```bash
+    git clone https://github.com/TUO_USERNAME/NOME_DEL_REPOSITORY.git
+    ```
+    Questo creerà una nuova cartella con il nome del repository e scaricherà tutti i file del progetto al suo interno.
+
+**Metodo 2: Scaricare il Progetto come File ZIP (Per Utenti Non-Git)**
+
+Questo metodo è più semplice se non hai bisogno di usare Git o di contribuire al progetto, ma vuoi solo una copia dei file.
+
+1.  **Vai alla Pagina del Repository:**
+    Apri il tuo browser web e vai all'URL del repository GitHub del progetto (che ti verrà fornito).
+    Esempio: `https://github.com/TUO_USERNAME/NOME_DEL_REPOSITORY`
+
+2.  **Scarica il File ZIP:**
+    Sulla pagina del repository, cerca un pulsante verde con l'etichetta "**< > Code**" (o "Code").
+    Clicca su questo pulsante.
+    Nel menu a tendina che appare, seleziona l'opzione "**Download ZIP**".
+
+3.  **Estrai i File:**
+    Il browser scaricherà un file `.zip` contenente l'intero progetto.
+    Una volta scaricato, trova il file `.zip` (solitamente nella cartella "Download"), cliccaci sopra con il tasto destro del mouse e seleziona "Estrai tutto..." o "Extract All...".
+    Scegli una destinazione sul tuo computer dove vuoi salvare i file estratti.
+
+---
