@@ -19,14 +19,10 @@ import CashFlowChart from "./components/CashFlowChart.vue";
 import AnnualDetailTable from "./components/AnnualDetailTable.vue";
 import DebtSection from "./components/DebtSection.vue";
 import SummaryDashboard from "./components/SummaryDashboard.vue";
+import JsonDataManagement from "./components/JsonDataManagement.vue";
 
 // Import services
 import { leggiInput } from "./services/financialCalculator";
-const jsonImporter = ref(null);
-
-function triggerJsonImport() {
-  jsonImporter.value.click();
-}
 import { importaJSON, esportaJSON, esportaExcel as exportExcelService, esportaCapitaleExcel as exportCapitalExcelService, esportaFlussiExcel as exportCashFlowExcelService, salvaConfronto as saveComparisonService, resetConfronto as resetComparisonService } from "./services/dataManagementService.js";
 import { popolaDatiIniziali as initializeDataService } from "./services/initializationService.js";
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
@@ -179,7 +175,7 @@ const formInputs = reactive({
   etaRitiro: 65,
   numeroSimulazioni: 1000,
   simMode: "deterministic",
-  isRetirement: false,
+  
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
   scenarioCrisi: 'none', // Nuovo campo per la selezione dello scenario di crisi
@@ -345,44 +341,7 @@ function updateGoalSeekOptions() {
   goalSeekVariableOptions.value = options;
 }
 
-// Funzioni di gestione dati e scenari (delegate al servizio dataManagementService)
-function handleImportJson(event) {
-  importaJSON(event, formInputs, mostraNotifica);
-}
-
-function handleExportJson() {
-  esportaJSON(formInputs, mostraNotifica);
-}
-
-function handleSaveScenario() {
-  saveComparisonService(scenarioA, ultimoRisultato, formInputs, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
-}
-
-function handleResetScenario() {
-  resetComparisonService(scenarioA, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
-}
-
-function handleExportExcel() {
-  exportExcelService(ultimoRisultato.value, risultatiHeader, risultatiBody, mostraNotifica);
-}
-
-function handleExportCapitalExcel() {
-  exportCapitalExcelService(ultimoRisultato.value, formInputs, monteCarloSummaryResults.value, scenarioA.value, mostraNotifica);
-}
-
-function handleExportCashFlowExcel() {
-  exportCashFlowExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
-}
-
-function handleExportPdf() {
-  generateSimulationReport(formInputs, ultimoRisultato.value, datiFIRE.value, monteCarloSummaryResults.value, formatterValuta);
-}
-
-function handleFileChange(event) {
-  handleImportJson(event);
-}
-
-// Funzione di Goal Seek (delegate al servizio goalSeekService)
+// Funzioni di Goal Seek (delegate al servizio goalSeekService)
 async function handleExecuteGoalSeek() {
   await executeGoalSeekService(formInputs, loaderHidden, mostraNotifica);
 }
@@ -439,9 +398,83 @@ function handleViewDetails() {
   showDetailedResults.value = true;
 }
 
+const handleImportJson = (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      // Mantieni la reattività degli oggetti Vue
+      for (const key in formInputs) {
+        if (Object.hasOwnProperty.call(formInputs, key)) {
+          if (typeof formInputs[key] === 'object' && formInputs[key] !== null && !Array.isArray(formInputs[key])) {
+            // Se è un oggetto reattivo, aggiorna le sue proprietà
+            Object.assign(formInputs[key], importedData[key]);
+          } else if (Array.isArray(formInputs[key])) {
+            // Se è un array reattivo, svuotalo e ripopolalo
+            formInputs[key].splice(0, formInputs[key].length, ...importedData[key]);
+          } else {
+            // Per le proprietà semplici, assegna direttamente
+            formInputs[key] = importedData[key];
+          }
+        }
+      }
+      mostraNotifica("Importazione Completata", "I dati della simulazione sono stati caricati dal file JSON.");
+    } catch (error) {
+      console.error("Errore durante l'importazione JSON:", error);
+      mostraNotifica("Errore", "Impossibile leggere o parsare il file JSON. Assicurati che sia un JSON valido.", true);
+    }
+  };
+  reader.onerror = () => {
+    mostraNotifica("Errore", "Impossibile leggere il file.", true);
+  };
+  reader.readAsText(file);
+};
+
+const handleExportJson = () => {
+  esportaJSON(formInputs, mostraNotifica);
+};
+
+function handleSaveScenario() {
+  saveComparisonService(scenarioA, ultimoRisultato, formInputs, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
+}
+
+function handleResetScenario() {
+  resetComparisonService(scenarioA, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
+}
+
 function openGuide() {
   
   window.open('/guide.html', '_blank', 'width=800,height=600,resizable=yes,scrollbars=yes');
+}
+
+function handleExportPdf() {
+  generateSimulationReport(
+    ultimoRisultato.value,
+    risultatiHeader.value,
+    risultatiBody.value,
+    datiFIRE.value,
+    monteCarloSummaryResults.value, // Aggiunto monteCarloSummaryResults
+    formatterValuta,
+    mostraNotifica,
+    formInputs
+  );
+}
+
+function handleExportExcel() {
+  exportExcelService(ultimoRisultato.value, risultatiHeader, risultatiBody, mostraNotifica);
+}
+
+function handleExportCapitalExcel() {
+  exportCapitalExcelService(ultimoRisultato.value, formInputs, monteCarloSummaryResults.value, scenarioA.value, mostraNotifica);
+}
+
+function handleExportCashFlowExcel() {
+  exportCashFlowExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
 // Lifecycle hook
@@ -475,22 +508,8 @@ onMounted(() => {
     <!-- Sezione Parametri -->
     <div id="parameters">
       <h2 class="section-title">Parametri di Simulazione</h2>
-      <div class="flex flex-wrap items-center gap-4 mb-6">
-        <button @click="triggerJsonImport()" class="btn btn-secondary">
-          Importa da JSON
-        </button>
-        <input
-          type="file"
-          id="jsonImporter"
-          ref="jsonImporter"
-          class="hidden" style="display: none;"
-          accept=".json"
-          @change="handleFileChange"
-        />
-        <button @click="handleExportJson()" class="btn btn-secondary">
-          Esporta in JSON
-        </button>
-      </div>
+      <JsonDataManagement @import-json="handleImportJson" @export-json="handleExportJson" />
+      
       <SimulationSettings v-model="formInputs" />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
       <AssetAllocation v-model="formInputs.assetAllocation" />

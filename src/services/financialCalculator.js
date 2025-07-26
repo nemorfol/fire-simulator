@@ -9,7 +9,7 @@ export function leggiInput(formInputs) {
       etaRitiro: parseInt(formInputs.etaRitiro),
       numeroSimulazioni: parseInt(formInputs.numeroSimulazioni),
       simMode: formInputs.simMode,
-      isRetirement: formInputs.isRetirement,
+      
       strategiaPrelievo: formInputs.strategiaPrelievo,
       percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,
       scenarioCrisi: formInputs.scenarioCrisi,

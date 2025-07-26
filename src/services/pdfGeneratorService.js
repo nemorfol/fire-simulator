@@ -1,8 +1,8 @@
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
-export function generateSimulationReport(formInputs, ultimoRisultato, datiFIRE, monteCarloSummaryResults, formatterValuta) {
-  console.log("Dati ultimoRisultato nel PDF service:", ultimoRisultato);
+export function generateSimulationReport(ultimoRisultato, risultatiHeader, risultatiBody, datiFIRE, monteCarloSummaryResults, formatterValuta, mostraNotifica, formInputs) {
+  ultimoRisultato = Array.isArray(ultimoRisultato) ? ultimoRisultato : []; // Assicurati che sia un array
   const doc = new jsPDF('p', 'pt', 'a4');
   let y = 20; // Posizione Y iniziale
   const margin = 40;
