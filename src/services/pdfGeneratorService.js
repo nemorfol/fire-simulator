@@ -65,7 +65,7 @@ export function generateSimulationReport(formInputs, ultimoRisultato, datiFIRE, 
     y += lineHeight;
     doc.text(`Costi Sanitari Annuo in Pensione: ${formatterValuta.format(formInputs.costiSanitariPensione)}`, margin, y);
     y += lineHeight;
-    doc.text(`Strategia di Prelievo: ${formInputs.strategiaPrelievo === 'regolaFIRE' ? 'Regola FIRE (Fisso)' : 'Percentuale Costante'}`, margin, y);
+    doc.text(`Strategia di Prelievo: ${formInputs.strategiaPrelievo === 'regolaFIRE' ? 'Regola FIRE (Fisso)' : formInputs.strategiaPrelievo === 'percentualeCostante' ? 'Percentuale Costante' : 'Prelievo Fisso (Aggiustato per Inflazione)'}`, margin, y);
     y += lineHeight;
     if (formInputs.strategiaPrelievo === 'percentualeCostante') {
       doc.text(`Percentuale di Prelievo: ${formInputs.percentualePrelievo}%`, margin, y);

@@ -182,6 +182,12 @@ export function calcolaProiezione(
         const withdrawalAmount = risultatoAnno.capitaleIniziale * withdrawalRate;
         totalExpensesForYear = (totaleRataDebiti || 0) + withdrawalAmount;
         risultatoAnno.prelievo = withdrawalAmount;
+    } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'prelievoFissoInflazione') {
+        // Calcola il prelievo fisso iniziale (es. 4% del capitale iniziale) e lo aggiusta per l'inflazione
+        const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100); // Usiamo regolaFIRE come base per il prelievo iniziale
+        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
+        totalExpensesForYear = (totaleRataDebiti || 0) + adjustedWithdrawal;
+        risultatoAnno.prelievo = adjustedWithdrawal;
     } else {
         let totaleUsciteRicorrenti = 0;
         inputs.uscite.ricorrenti.forEach((u) => {

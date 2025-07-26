@@ -6,20 +6,20 @@ const props = defineProps({
   resetScenarioBtnHidden: Boolean,
 });
 
-const emit = defineEmits(['import-csv', 'export-csv', 'save-scenario', 'reset-scenario']);
+const emit = defineEmits(['save-scenario', 'reset-scenario']);
 
-const csvImporter = ref(null);
+const jsonImporter = ref(null);
 
-function triggerCsvImport() {
-  csvImporter.value.click();
+function triggerJsonImport() {
+  jsonImporter.value.click();
 }
 
 function handleFileChange(event) {
-  emit('import-csv', event);
+  emit('import-json', event);
 }
 
-function handleExportCsv() {
-  emit('export-csv');
+function handleExportJson() {
+  emit('export-json');
 }
 
 function handleSaveScenario() {
@@ -35,20 +35,7 @@ function handleResetScenario() {
   <div class="card">
     <h3 class="card-title">5. Gestione Dati e Scenari</h3>
     <div class="flex flex-wrap items-center gap-4">
-      <button @click="triggerCsvImport()" class="btn btn-secondary">
-        Importa da CSV
-      </button>
-      <input
-        type="file"
-        id="csvImporter"
-        ref="csvImporter"
-        class="hidden"
-        accept=".csv"
-        @change="handleFileChange"
-      />
-      <button @click="handleExportCsv()" class="btn btn-secondary">
-        Esporta in CSV
-      </button>
+      
       <button
         id="save-scenario-btn"
         @click="handleSaveScenario()"

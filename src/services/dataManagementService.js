@@ -2,67 +2,58 @@ import ExcelJS from 'exceljs';
 import { Chart, registerables } from 'chart.js';
 Chart.register(...registerables);
 
-export function importaCSV(event, formInputs, mostraNotifica) {
+export function esportaJSON(formInputs, mostraNotifica) {
+  try {
+    const dataToExport = JSON.stringify(formInputs, null, 2); // Pretty print JSON
+    const blob = new Blob([dataToExport], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'configurazione_simulatore.json';
+    a.click(); // Simula il click per avviare il download
+    URL.revokeObjectURL(url); // Rilascia l'URL dell'oggetto
+    mostraNotifica("Esportazione Completata", "I dati della simulazione sono stati salvati nel file JSON.");
+  } catch (error) {
+    console.error("Errore durante l'esportazione JSON:", error);
+    mostraNotifica("Errore", "Impossibile esportare i dati in JSON.", true);
+  }
+}
+
+export function importaJSON(event, formInputs, mostraNotifica) {
   const file = event.target.files[0];
   if (!file) {
     return;
   }
+
   const reader = new FileReader();
   reader.onload = (e) => {
-    const data = new Uint8Array(e.target.result);
-    const workbook = new ExcelJS.Workbook();
-    workbook.xlsx.load(data).then(() => {
-      const worksheet = workbook.getWorksheet(1);
-      const json = [];
-      worksheet.eachRow((row, rowNumber) => {
-        if (rowNumber === 1) {
-          // headers
-          json.push(row.values.filter(Boolean));
-        } else {
-          json.push(row.values.filter(Boolean));
+    try {
+      const importedData = JSON.parse(e.target.result);
+      // Mantieni la reattività degli oggetti Vue
+      for (const key in formInputs) {
+        if (Object.hasOwnProperty.call(formInputs, key)) {
+          if (typeof formInputs[key] === 'object' && formInputs[key] !== null && !Array.isArray(formInputs[key])) {
+            // Se è un oggetto reattivo, aggiorna le sue proprietà
+            Object.assign(formInputs[key], importedData[key]);
+          } else if (Array.isArray(formInputs[key])) {
+            // Se è un array reattivo, svuotalo e ripopolalo
+            formInputs[key].splice(0, formInputs[key].length, ...importedData[key]);
+          } else {
+            // Per le proprietà semplici, assegna direttamente
+            formInputs[key] = importedData[key];
+          }
         }
-      });
-
-      if (json.length > 1) {
-        const headers = json[0];
-        const values = json[1];
-        const loadedData = {};
-        headers.forEach((header, i) => {
-          loadedData[header] = values[i];
-        });
-        Object.assign(formInputs, loadedData);
-        mostraNotifica("Successo", "Dati importati correttamente.");
-      } else {
-        mostraNotifica("Errore", "Il file è vuoto o malformato.", true);
       }
-    });
+      mostraNotifica("Importazione Completata", "I dati della simulazione sono stati caricati dal file JSON.");
+    } catch (error) {
+      console.error("Errore durante l'importazione JSON:", error);
+      mostraNotifica("Errore", "Impossibile leggere o parsare il file JSON. Assicurati che sia un JSON valido.", true);
+    }
   };
   reader.onerror = () => {
     mostraNotifica("Errore", "Impossibile leggere il file.", true);
   };
-  reader.readAsArrayBuffer(file);
-}
-
-export function esportaCSV(formInputs) {
-  const dataToExport = JSON.parse(JSON.stringify(formInputs));
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet("Configurazione Simulatore");
-
-  const headers = Object.keys(dataToExport);
-  const values = Object.values(dataToExport);
-
-  worksheet.addRow(headers);
-  worksheet.addRow(values);
-
-  workbook.xlsx.writeBuffer().then(data => {
-    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "configurazione_simulatore.xlsx";
-    a.click();
-    window.URL.revokeObjectURL(url);
-  });
+  reader.readAsText(file);
 }
 
 export async function esportaExcel(ultimoRisultato, risultatiHeader, risultatiBody, mostraNotifica) {
@@ -77,6 +68,22 @@ export async function esportaExcel(ultimoRisultato, risultatiHeader, risultatiBo
 
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Dettaglio Annuale");
+
+  // Aggiungi un foglio per i parametri di input
+  const inputWorksheet = workbook.addWorksheet("Parametri Input");
+  const inputData = [];
+  for (const key in formInputs) {
+    if (Object.hasOwnProperty.call(formInputs, key)) {
+      const value = formInputs[key];
+      if (typeof value !== 'object' || value === null) {
+        inputData.push([key, value]);
+      } else {
+        // Per oggetti e array, serializza in JSON per ora
+        inputData.push([key, JSON.stringify(value)]);
+      }
+    }
+  }
+  inputWorksheet.addRows(inputData);
 
   worksheet.addRow(risultatiHeader.value);
   risultatiBody.value.forEach(row => {

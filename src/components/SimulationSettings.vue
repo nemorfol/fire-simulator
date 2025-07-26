@@ -95,6 +95,15 @@ const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPr
           title="La percentuale di tassazione applicata annualmente sui rendimenti del tuo capitale investito."
         />
       </div>
+      <div class="col-span-1">
+        <label class="block text-sm mb-1">Fase di Simulazione</label>
+        <div class="flex items-center mt-2">
+          <input type="radio" id="faseAccumulo" value="false" v-model="localFormInputs.isRetirement" class="mr-2">
+          <label for="faseAccumulo" class="mr-4">Accumulo</label>
+          <input type="radio" id="faseRitiro" value="true" v-model="localFormInputs.isRetirement" class="mr-2">
+          <label for="faseRitiro">Fase di Ritiro</label>
+        </div>
+      </div>
       <div id="fase-ritiro-params" v-show="showFaseRitiroParams">
         <label for="etaRitiro" class="block text-sm mb-1">Età di Ritiro</label>
         <input
@@ -124,6 +133,7 @@ const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPr
         >
           <option value="regolaFIRE">Regola FIRE (Fisso)</option>
           <option value="percentualeCostante">Percentuale Costante</option>
+          <option value="prelievoFissoInflazione">Prelievo Fisso (Aggiustato per Inflazione)</option>
         </select>
       </div>
 

@@ -30,26 +30,33 @@ function closeModal() {
 <template>
   <div
     id="notificationModal"
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full"
     v-show="!hidden"
+    style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    "
   >
     <div
-      class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
+      class="relative mx-auto p-5 border w-96 shadow-lg rounded-md bg-white" style="background-color: white;"
     >
       <div class="mt-3 text-center">
-        <div
-          id="notificationIcon"
-          class="mx-auto flex items-center justify-center h-12 w-12 rounded-full"
-          :class="isError ? 'bg-red-100' : 'bg-teal-100'"
-        ></div>
+        
         <h3
-          class="text-lg leading-6 font-bold text-gray-900"
+          class="text-xl leading-6 font-bold text-gray-900"
           id="notificationTitle"
         >
           {{ title }}
         </h3>
         <div class="mt-2 px-7 py-3">
-          <p class="text-sm text-gray-600" id="notificationBody">
+          <p class="text-base text-gray-800" id="notificationBody">
             {{ body }}
           </p>
         </div>
@@ -59,7 +66,7 @@ function closeModal() {
             @click="closeModal()"
             class="px-4 py-2 bg-teal-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-400"
           >
-            OK
+            Chiudi
           </button>
         </div>
       </div>

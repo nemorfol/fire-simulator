@@ -22,7 +22,12 @@ import SummaryDashboard from "./components/SummaryDashboard.vue";
 
 // Import services
 import { leggiInput } from "./services/financialCalculator";
-import { importaCSV as importCsvService, esportaCSV as exportCsvService, esportaExcel as exportExcelService, esportaCapitaleExcel as exportCapitalExcelService, esportaFlussiExcel as exportCashFlowExcelService, salvaConfronto as saveComparisonService, resetConfronto as resetComparisonService } from "./services/dataManagementService.js";
+const jsonImporter = ref(null);
+
+function triggerJsonImport() {
+  jsonImporter.value.click();
+}
+import { importaJSON, esportaJSON, esportaExcel as exportExcelService, esportaCapitaleExcel as exportCapitalExcelService, esportaFlussiExcel as exportCashFlowExcelService, salvaConfronto as saveComparisonService, resetConfronto as resetComparisonService } from "./services/dataManagementService.js";
 import { popolaDatiIniziali as initializeDataService } from "./services/initializationService.js";
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
@@ -341,12 +346,12 @@ function updateGoalSeekOptions() {
 }
 
 // Funzioni di gestione dati e scenari (delegate al servizio dataManagementService)
-function handleImportCsv(event) {
-  importCsvService(event, formInputs, mostraNotifica);
+function handleImportJson(event) {
+  importaJSON(event, formInputs, mostraNotifica);
 }
 
-function handleExportCsv() {
-  exportCsvService(formInputs);
+function handleExportJson() {
+  esportaJSON(formInputs, mostraNotifica);
 }
 
 function handleSaveScenario() {
@@ -371,6 +376,10 @@ function handleExportCashFlowExcel() {
 
 function handleExportPdf() {
   generateSimulationReport(formInputs, ultimoRisultato.value, datiFIRE.value, monteCarloSummaryResults.value, formatterValuta);
+}
+
+function handleFileChange(event) {
+  handleImportJson(event);
 }
 
 // Funzione di Goal Seek (delegate al servizio goalSeekService)
@@ -466,6 +475,22 @@ onMounted(() => {
     <!-- Sezione Parametri -->
     <div id="parameters">
       <h2 class="section-title">Parametri di Simulazione</h2>
+      <div class="flex flex-wrap items-center gap-4 mb-6">
+        <button @click="triggerJsonImport()" class="btn btn-secondary">
+          Importa da JSON
+        </button>
+        <input
+          type="file"
+          id="jsonImporter"
+          ref="jsonImporter"
+          class="hidden" style="display: none;"
+          accept=".json"
+          @change="handleFileChange"
+        />
+        <button @click="handleExportJson()" class="btn btn-secondary">
+          Esporta in JSON
+        </button>
+      </div>
       <SimulationSettings v-model="formInputs" />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
       <AssetAllocation v-model="formInputs.assetAllocation" />
@@ -478,8 +503,6 @@ onMounted(() => {
       <DataManagement
         :save-scenario-btn-disabled="saveScenarioBtnDisabled"
         :reset-scenario-btn-hidden="resetScenarioBtnHidden"
-        @import-csv="handleImportCsv"
-        @export-csv="handleExportCsv"
         @save-scenario="handleSaveScenario"
         @reset-scenario="handleResetScenario"
       />
