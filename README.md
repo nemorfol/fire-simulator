@@ -12,17 +12,13 @@ Questo progetto è un simulatore finanziario interattivo progettato per aiutare 
 *   **Visualizzazione Dati:** Presenta i risultati tramite dashboard riassuntive, grafici interattivi (andamento capitale, flussi di cassa) e tabelle di dettaglio annuale.
 *   **Esportazione Dati:** Possibilità di esportare i risultati in formato Excel per analisi approfondite.
 
-## Come Avviare il Progetto in Locale:
+## Guide Utili:
 
-Per istruzioni dettagliate su come installare le dipendenze e avviare il simulatore sulla tua macchina locale (Windows), consulta il file `manuali/GUIDA_INSTALLAZIONE_LOCALE.txt`.
-
-## Come Ottenere il Progetto:
-
-Per informazioni su come clonare o scaricare il repository da GitHub, consulta il file `manuali/GUIDA_CLONE_GITHUB.txt`.
+*   **[Come Avviare il Progetto in Locale (Windows)](manuali/GUIDA_INSTALLAZIONE_LOCALE.md)**
+*   **[Come Ottenere il Progetto da GitHub](manuali/GUIDA_CLONE_GITHUB.md)**
+*   **[Come Segnalare un Bug o Suggerire una Funzionalità](manuali/GUIDA_SEGNALAZIONE_BUG.md)**
 
 ## Segnalazione Bug e Contributi:
 
 Per segnalare bug o suggerire nuove funzionalità, visita la sezione "Issues" del repository GitHub all'indirizzo:
 `https://github.com/nemorfol/fire-simulator/issues`
-
-Per maggiori dettagli su come segnalare un bug, consulta il file `manuali/GUIDA_SEGNALAZIONE_BUG.txt`.
