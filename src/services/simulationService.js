@@ -87,7 +87,7 @@ export function calcolaProiezione(
   historicalReturns = null
 ) {
   const inputs = JSON.parse(JSON.stringify(baseInputs));
-  adjustValuesForInflation(inputs);
+  
 
   const risultatiFinali = [];
   let capitalePerConto = {};
@@ -95,12 +95,7 @@ export function calcolaProiezione(
     capitalePerConto[asset.nome] = inputs.impostazioni.capitaleIniziale * (asset.quota / 100);
   });
   let etaCorrente = inputs.impostazioni.etaIniziale;
-  const valoriRicorrenti = {};
-  [...inputs.entrate.ricorrenti, ...inputs.uscite.ricorrenti].forEach(
-    (item) => {
-      if (item.desc) valoriRicorrenti[item.desc] = item.valore;
-    }
-  );
+  
 
   let debitiAttivi = inputs.debiti.map(debito => ({
     ...debito,
@@ -113,9 +108,7 @@ export function calcolaProiezione(
   let etaEsaurimento = null; // Età in cui il capitale si esaurisce per la prima volta
 
   for (let anno = annoInizio; anno <= annoFine; anno++) {
-    const inFaseDiRitiro =
-      inputs.impostazioni.isRetirement &&
-      etaCorrente >= inputs.impostazioni.etaRitiro;
+    const inFaseDiRitiro = etaCorrente >= inputs.impostazioni.etaRitiro;
     const risultatoAnno = {
       anno,
       eta: etaCorrente,
@@ -124,25 +117,26 @@ export function calcolaProiezione(
 
     let totaleEntrateLordeOrdinarie = 0;
     let totaleEntrateLordeSostitutive = 0;
+    let totaleEntrateLordeEsenti = 0;
     let imposteSostitutive = 0;
 
     inputs.entrate.ricorrenti.forEach((e) => {
+      const currentInFaseDiRitiro = inFaseDiRitiro; // Variabile locale per garantire lo scope
       if (
         anno >= e.inizio &&
         anno <= e.fine &&
-        (!inFaseDiRitiro || e.inPensione)
+        (!currentInFaseDiRitiro || e.inPensione)
       ) {
-        if (anno > e.inizio) {
-          const inflationRate = inputs.impostazioni.tassoInflazione / 100;
-          valoriRicorrenti[e.desc] *= (1 + e.incr / 100) * (1 + inflationRate);
-        }
-        const valoreCorrente = valoriRicorrenti[e.desc];
+        const yearsPassed = anno - e.inizio;
+        const valoreCorrente = e.valore * Math.pow(1 + e.incr / 100, yearsPassed) * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, yearsPassed);
         risultatoAnno[e.desc] = valoreCorrente;
         if (e.taxRegime === "ordinaria") {
           totaleEntrateLordeOrdinarie += valoreCorrente;
         } else if (e.taxRegime === "sostitutiva") {
           imposteSostitutive += valoreCorrente * (e.aliquotaSost / 100);
           totaleEntrateLordeSostitutive += valoreCorrente;
+        } else if (e.taxRegime === "esente") {
+          totaleEntrateLordeEsenti += valoreCorrente;
         }
       } else {
         risultatoAnno[e.desc] = 0;
@@ -156,6 +150,7 @@ export function calcolaProiezione(
     let totalIncomeForYear =
       totaleEntrateLordeOrdinarie +
       totaleEntrateLordeSostitutive +
+      totaleEntrateLordeEsenti +
       risultatoAnno.entrateLumpSum;
     
     let totaleRataDebiti = 0;
@@ -177,42 +172,47 @@ export function calcolaProiezione(
     let totalExpensesForYear = 0;
     risultatoAnno.prelievo = 0; // Inizializza prelievo a 0
 
+    let totaleUsciteRicorrenti = 0;
+    inputs.uscite.ricorrenti.forEach((u) => {
+      if (anno >= u.inizio && anno <= u.fine) {
+        const inflazioneApplicata =
+          u.inflazioneSpecifica > 0
+            ? u.inflazioneSpecifica
+            : inputs.impostazioni.tassoInflazione;
+        const yearsPassed = anno - u.inizio;
+        const valoreCorrenteUscita = u.valore * Math.pow(1 + u.incr / 100, yearsPassed) * Math.pow(1 + inflazioneApplicata / 100, yearsPassed);
+        risultatoAnno[u.desc] = valoreCorrenteUscita;
+        totaleUsciteRicorrenti += valoreCorrenteUscita;
+      } else {
+        risultatoAnno[u.desc] = 0;
+      }
+    });
+
+    const usciteLumpSum = inputs.uscite.lumpSum
+      .filter((u) => u.anno === anno)
+      .reduce((s, u) => s + u.importo, 0);
+    risultatoAnno.usciteLumpSum = usciteLumpSum;
+    
+    totalExpensesForYear = totaleUsciteRicorrenti + usciteLumpSum + totaleRataDebiti;
+
+    console.log(`Anno: ${anno}, Età Corrente: ${etaCorrente}, In Fase di Ritiro: ${inFaseDiRitiro}, Strategia Prelievo: ${inputs.impostazioni.strategiaPrelievo}`);
+
     if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'percentualeCostante') {
         const withdrawalRate = inputs.impostazioni.percentualePrelievo / 100;
         const withdrawalAmount = risultatoAnno.capitaleIniziale * withdrawalRate;
-        totalExpensesForYear = (totaleRataDebiti || 0) + withdrawalAmount;
         risultatoAnno.prelievo = withdrawalAmount;
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'prelievoFissoInflazione') {
         // Calcola il prelievo fisso iniziale (es. 4% del capitale iniziale) e lo aggiusta per l'inflazione
         const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100); // Usiamo regolaFIRE come base per il prelievo iniziale
         const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
-        totalExpensesForYear = (totaleRataDebiti || 0) + adjustedWithdrawal;
         risultatoAnno.prelievo = adjustedWithdrawal;
-    } else {
-        let totaleUsciteRicorrenti = 0;
-        inputs.uscite.ricorrenti.forEach((u) => {
-          if (anno >= u.inizio && anno <= u.fine) {
-            const inflazioneApplicata =
-              u.inflazioneSpecifica > 0
-                ? u.inflazioneSpecifica
-                : inputs.impostazioni.tassoInflazione;
-            if (anno > u.inizio)
-              valoriRicorrenti[u.desc] *=
-                (1 + u.incr / 100) * (1 + inflazioneApplicata / 100);
-            risultatoAnno[u.desc] = valoriRicorrenti[u.desc];
-            totaleUsciteRicorrenti += valoriRicorrenti[u.desc];
-          } else {
-            risultatoAnno[u.desc] = 0;
-          }
-        });
-
-        const usciteLumpSum = inputs.uscite.lumpSum
-          .filter((u) => u.anno === anno)
-          .reduce((s, u) => s + u.importo, 0);
-        risultatoAnno.usciteLumpSum = usciteLumpSum;
-        
-        totalExpensesForYear = totaleUsciteRicorrenti + usciteLumpSum + totaleRataDebiti;
+    } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'regolaFIRE') {
+        const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100);
+        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
+        risultatoAnno.prelievo = adjustedWithdrawal;
     }
+
+    console.log(`  risultatoAnno.prelievo finale: ${risultatoAnno.prelievo}`);
 
     let taxableOrdinaryIncome = totaleEntrateLordeOrdinarie;
     const impostaRedditoOrdinario =
@@ -325,6 +325,7 @@ export function mostraRisultatiDeterministici(
       capitaleIniziale: r.capitaleIniziale,
       totaleEntrate: r.totaleEntrate,
       totaleUscite: r.totaleUscite,
+      prelievo: r.prelievo,
       prelievo: r.prelievo,
       utilePerditaLordo: r.utilePerditaLordo,
       impostaReddito: r.impostaReddito,
