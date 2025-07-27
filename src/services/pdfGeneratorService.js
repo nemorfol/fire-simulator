@@ -240,6 +240,12 @@ export function generateSimulationReport(ultimoRisultato, risultatiHeader, risul
       margin: { left: margin, right: margin },
       styles: { fontSize: 7, cellPadding: 0.5, overflow: 'linebreak' },
       headStyles: { fillColor: [200, 200, 200], textColor: [0, 0, 0] },
+      willDrawCell: (data) => {
+        const row = ultimoRisultato[data.row.index];
+        if (row && row.capitaleIniziale <= 0) {
+          doc.setFillColor(255, 204, 203); // Light red
+        }
+      },
       didDrawPage: (data) => {
         y = data.cursor.y + 10; // Aggiorna la posizione Y dopo la tabella
       }

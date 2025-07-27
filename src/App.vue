@@ -377,21 +377,175 @@ async function handleAvviaSimulazione() {
 }
 
 function handleShowSankey(data) {
-  const nodes = [
-    { name: "Entrate" },
-    { name: "Uscite" },
-    { name: "Tasse" },
-    { name: "Risparmio" },
-  ];
+  const plotlyNodes = [];
+  const plotlyLinksSource = [];
+  const plotlyLinksTarget = [];
+  const plotlyLinksValue = [];
+  const plotlyLinksLabel = [];
 
-  const links = [
-    { source: 0, target: 1, value: data.totaleUscite },
-    { source: 0, target: 2, value: data.impostaReddito + data.impostaRendite },
-    { source: 0, target: 3, value: data.utilePerditaNetto - data.rendimentoNetto },
-  ];
+  const nodeNameToIndex = {};
+  let currentIndex = 0;
 
-  localStorage.setItem('sankeyData', JSON.stringify({ nodes, links }));
-  window.open('/chart.html', '_blank', 'width=820,height=450,resizable=yes,scrollbars=yes');
+  function getOrAddNodeIndex(name) {
+    if (nodeNameToIndex[name] === undefined) {
+      nodeNameToIndex[name] = currentIndex++;
+      plotlyNodes.push(name);
+    }
+    return nodeNameToIndex[name];
+  }
+
+  const currentYear = data.anno;
+  const inflationRate = formInputs.tassoInflazione / 100;
+
+  // --- Calcolo dei valori dettagliati per l'anno corrente --- 
+  const detailedIncomes = {};
+  formInputs.entrateRicorrenti.forEach(item => {
+    if (currentYear >= item.inizio && currentYear <= item.fine) {
+      const yearsPassed = currentYear - item.inizio;
+      let value = item.valore * Math.pow(1 + item.incr / 100, yearsPassed);
+      if (item.isTodayValue) {
+        value *= Math.pow(1 + inflationRate, yearsPassed);
+      }
+      detailedIncomes[item.desc] = value;
+    }
+  });
+  formInputs.entrateLumpSum.forEach(item => {
+    if (currentYear === item.anno) {
+      detailedIncomes[item.desc] = item.importo;
+    }
+  });
+
+  const detailedExpenses = {};
+  formInputs.usciteRicorrenti.forEach(item => {
+    if (currentYear >= item.inizio && currentYear <= item.fine) {
+      const yearsPassed = currentYear - item.inizio;
+      const specificInflation = item.inflazioneSpecifica > 0 ? item.inflazioneSpecifica / 100 : inflationRate;
+      let value = item.valore * Math.pow(1 + item.incr / 100, yearsPassed);
+      if (item.isTodayValue) {
+        value *= Math.pow(1 + specificInflation, yearsPassed);
+      }
+      detailedExpenses[item.desc] = value;
+    }
+  });
+  formInputs.usciteLumpSum.forEach(item => {
+    if (currentYear === item.anno) {
+      detailedExpenses[item.desc] = item.importo;
+    }
+  });
+
+  // --- Costruzione del grafico Sankey --- 
+
+  // Livello 0: Entrate Dettagliate
+  const entrateAggregateNode = getOrAddNodeIndex('Entrate Totali');
+  for (const [desc, value] of Object.entries(detailedIncomes)) {
+    if (value > 0) {
+      const sourceNode = getOrAddNodeIndex(desc);
+      plotlyLinksSource.push(sourceNode);
+      plotlyLinksTarget.push(entrateAggregateNode);
+      plotlyLinksValue.push(value);
+      plotlyLinksLabel.push(`${desc}: ${value.toFixed(2)}`);
+    }
+  }
+
+  // Livello 1: Uscite, Tasse, Risparmio
+  const usciteNode = getOrAddNodeIndex('Uscite');
+  const tasseNode = getOrAddNodeIndex('Tasse');
+  const risparmioNode = getOrAddNodeIndex('Risparmio');
+
+  if (data.totaleUscite > 0) {
+    plotlyLinksSource.push(entrateAggregateNode);
+    plotlyLinksTarget.push(usciteNode);
+    plotlyLinksValue.push(data.totaleUscite);
+    plotlyLinksLabel.push(`Entrate -> Uscite: ${data.totaleUscite.toFixed(2)}`);
+  }
+  if (data.impostaReddito + data.impostaRendite > 0) {
+    plotlyLinksSource.push(entrateAggregateNode);
+    plotlyLinksTarget.push(tasseNode);
+    plotlyLinksValue.push(data.impostaReddito + data.impostaRendite);
+    plotlyLinksLabel.push(`Entrate -> Tasse: ${(data.impostaReddito + data.impostaRendite).toFixed(2)}`);
+  }
+  if (data.utilePerditaNetto > 0) {
+    plotlyLinksSource.push(entrateAggregateNode);
+    plotlyLinksTarget.push(risparmioNode);
+    plotlyLinksValue.push(data.utilePerditaNetto);
+    plotlyLinksLabel.push(`Entrate -> Risparmio: ${data.utilePerditaNetto.toFixed(2)}`);
+  }
+
+  // Livello 2: Uscite Dettagliate
+  for (const [desc, value] of Object.entries(detailedExpenses)) {
+    if (value > 0) {
+      const targetNode = getOrAddNodeIndex(desc);
+      plotlyLinksSource.push(usciteNode);
+      plotlyLinksTarget.push(targetNode);
+      plotlyLinksValue.push(value);
+      plotlyLinksLabel.push(`${desc}: ${value.toFixed(2)}`);
+    }
+  }
+
+  // Livello 2: Tasse Dettagliate
+  if (data.impostaReddito > 0) {
+    const impostaRedditoNode = getOrAddNodeIndex('Imposta Reddito');
+    plotlyLinksSource.push(tasseNode);
+    plotlyLinksTarget.push(impostaRedditoNode);
+    plotlyLinksValue.push(data.impostaReddito);
+    plotlyLinksLabel.push(`Imposta Reddito: ${data.impostaReddito.toFixed(2)}`);
+  }
+  if (data.impostaRendite > 0) {
+    const impostaRenditeNode = getOrAddNodeIndex('Imposta Rendite');
+    plotlyLinksSource.push(tasseNode);
+    plotlyLinksTarget.push(impostaRenditeNode);
+    plotlyLinksValue.push(data.impostaRendite);
+    plotlyLinksLabel.push(`Imposta Rendite: ${data.impostaRendite.toFixed(2)}`);
+  }
+
+  // Livello 2: Risparmio Dettagliato
+  if (data.utilePerditaNetto - data.rendimentoNetto > 0) {
+    const risparmioDaRedditoNode = getOrAddNodeIndex('Risparmio da Reddito');
+    plotlyLinksSource.push(risparmioNode);
+    plotlyLinksTarget.push(risparmioDaRedditoNode);
+    plotlyLinksValue.push(data.utilePerditaNetto - data.rendimentoNetto);
+    plotlyLinksLabel.push(`Risparmio da Reddito: ${(data.utilePerditaNetto - data.rendimentoNetto).toFixed(2)}`);
+  }
+  if (data.rendimentoNetto > 0) {
+    const risparmioDaRendimentoNode = getOrAddNodeIndex('Risparmio da Rendimento');
+    plotlyLinksSource.push(risparmioNode);
+    plotlyLinksTarget.push(risparmioDaRendimentoNode);
+    plotlyLinksValue.push(data.rendimentoNetto);
+    plotlyLinksLabel.push(`Risparmio da Rendimento: ${data.rendimentoNetto.toFixed(2)}`);
+  }
+
+  const plotlyFigure = {
+    data: [{
+      type: 'sankey',
+      node: {
+        pad: 15,
+        thickness: 20,
+        line: {
+          color: "black",
+          width: 0.5
+        },
+        label: plotlyNodes,
+        // Puoi personalizzare i colori qui, ad esempio in base alla categoria del nodo
+        // color: plotlyNodes.map(name => { /* logica per assegnare colori */ })
+      },
+      link: {
+        source: plotlyLinksSource,
+        target: plotlyLinksTarget,
+        value: plotlyLinksValue,
+        label: plotlyLinksLabel,
+        // Puoi personalizzare i colori dei link qui
+      }
+    }],
+    layout: {
+      title: `Flusso Finanziario Dettagliato per l'Anno ${currentYear}`,
+      font: {
+        size: 10
+      }
+    }
+  };
+
+  localStorage.setItem('sankeyData', JSON.stringify(plotlyFigure));
+  window.open('/chart.html', '_blank', 'width=1000,height=700,resizable=yes,scrollbars=yes');
 }
 
 function handleViewDetails() {
@@ -466,7 +620,7 @@ function handleExportPdf() {
 }
 
 function handleExportExcel() {
-  exportExcelService(ultimoRisultato.value, risultatiHeader, risultatiBody, mostraNotifica);
+  exportExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
 function handleExportCapitalExcel() {

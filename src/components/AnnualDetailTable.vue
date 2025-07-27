@@ -61,6 +61,7 @@ function formatHeader(headerKey) {
           :class="{
             'fire-goal-row':
               row.anno === (datiFIRE ? datiFIRE.anno : null),
+            'bg-red-200': row.capitaleIniziale <= 0,
           }"
         >
           <td>
@@ -95,4 +96,7 @@ function formatHeader(headerKey) {
 
 <style scoped>
 /* Stili specifici per AnnualDetailTable.vue */
+.results-table-container tbody tr.bg-red-200 td {
+  background-color: #fecaca !important; /* Tailwind's red-200 */
+}
 </style>

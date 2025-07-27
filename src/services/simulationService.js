@@ -128,7 +128,12 @@ export function calcolaProiezione(
         (!currentInFaseDiRitiro || e.inPensione)
       ) {
         const yearsPassed = anno - e.inizio;
-        const valoreCorrente = e.valore * Math.pow(1 + e.incr / 100, yearsPassed) * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, yearsPassed);
+        let valoreCorrente = e.valore * Math.pow(1 + e.incr / 100, yearsPassed);
+        
+        if (e.isTodayValue) {
+          valoreCorrente *= Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, yearsPassed);
+          
+        }
         risultatoAnno[e.desc] = valoreCorrente;
         if (e.taxRegime === "ordinaria") {
           totaleEntrateLordeOrdinarie += valoreCorrente;
@@ -145,7 +150,9 @@ export function calcolaProiezione(
 
     risultatoAnno.entrateLumpSum = inputs.entrate.lumpSum
       .filter((e) => e.anno === anno)
-      .reduce((s, e) => s + e.importo, 0);
+      .reduce((s, e) => {
+        return s + e.importo;
+      }, 0);
 
     let totalIncomeForYear =
       totaleEntrateLordeOrdinarie +
@@ -175,12 +182,15 @@ export function calcolaProiezione(
     let totaleUsciteRicorrenti = 0;
     inputs.uscite.ricorrenti.forEach((u) => {
       if (anno >= u.inizio && anno <= u.fine) {
+        const yearsPassed = anno - u.inizio;
         const inflazioneApplicata =
           u.inflazioneSpecifica > 0
             ? u.inflazioneSpecifica
             : inputs.impostazioni.tassoInflazione;
-        const yearsPassed = anno - u.inizio;
-        const valoreCorrenteUscita = u.valore * Math.pow(1 + u.incr / 100, yearsPassed) * Math.pow(1 + inflazioneApplicata / 100, yearsPassed);
+        let valoreCorrenteUscita = u.valore * Math.pow(1 + u.incr / 100, yearsPassed);
+        if (u.isTodayValue) {
+          valoreCorrenteUscita *= Math.pow(1 + inflazioneApplicata / 100, yearsPassed);
+        }
         risultatoAnno[u.desc] = valoreCorrenteUscita;
         totaleUsciteRicorrenti += valoreCorrenteUscita;
       } else {
@@ -190,12 +200,14 @@ export function calcolaProiezione(
 
     const usciteLumpSum = inputs.uscite.lumpSum
       .filter((u) => u.anno === anno)
-      .reduce((s, u) => s + u.importo, 0);
+      .reduce((s, u) => {
+        return s + u.importo;
+      }, 0);
     risultatoAnno.usciteLumpSum = usciteLumpSum;
     
     totalExpensesForYear = totaleUsciteRicorrenti + usciteLumpSum + totaleRataDebiti;
 
-    console.log(`Anno: ${anno}, Età Corrente: ${etaCorrente}, In Fase di Ritiro: ${inFaseDiRitiro}, Strategia Prelievo: ${inputs.impostazioni.strategiaPrelievo}`);
+    
 
     if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'percentualeCostante') {
         const withdrawalRate = inputs.impostazioni.percentualePrelievo / 100;
@@ -212,7 +224,7 @@ export function calcolaProiezione(
         risultatoAnno.prelievo = adjustedWithdrawal;
     }
 
-    console.log(`  risultatoAnno.prelievo finale: ${risultatoAnno.prelievo}`);
+    
 
     let taxableOrdinaryIncome = totaleEntrateLordeOrdinarie;
     const impostaRedditoOrdinario =
@@ -326,13 +338,12 @@ export function mostraRisultatiDeterministici(
       totaleEntrate: r.totaleEntrate,
       totaleUscite: r.totaleUscite,
       prelievo: r.prelievo,
-      prelievo: r.prelievo,
       utilePerditaLordo: r.utilePerditaLordo,
       impostaReddito: r.impostaReddito,
+      impostaRendite: r.impostaRendite,
       utilePerditaNetto: r.utilePerditaNetto,
       capitalePreRendimento: r.capitalePreRendimento,
       rendimentoLordo: r.rendimentoLordo,
-      impostaRendite: r.impostaRendite,
       rendimentoNetto: r.rendimentoNetto,
       capitaleFinale: r.capitaleFinale,
     };

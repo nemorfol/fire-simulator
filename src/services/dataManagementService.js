@@ -56,7 +56,7 @@ export function importaJSON(event, formInputs, mostraNotifica) {
   reader.readAsText(file);
 }
 
-export async function esportaExcel(ultimoRisultato, risultatiHeader, risultatiBody, mostraNotifica) {
+export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) {
   if (!ultimoRisultato || ultimoRisultato.length === 0) {
     mostraNotifica(
       "Nessun Dato",
@@ -69,7 +69,7 @@ export async function esportaExcel(ultimoRisultato, risultatiHeader, risultatiBo
   const workbook = new ExcelJS.Workbook();
   const worksheet = workbook.addWorksheet("Dettaglio Annuale");
 
-  // Aggiungi un foglio per i parametri di input
+  // ... (codice per aggiungere il foglio dei parametri di input - invariato)
   const inputWorksheet = workbook.addWorksheet("Parametri Input");
   const inputData = [];
   for (const key in formInputs) {
@@ -78,154 +78,254 @@ export async function esportaExcel(ultimoRisultato, risultatiHeader, risultatiBo
       if (typeof value !== 'object' || value === null) {
         inputData.push([key, value]);
       } else {
-        // Per oggetti e array, serializza in JSON per ora
         inputData.push([key, JSON.stringify(value)]);
       }
     }
   }
   inputWorksheet.addRows(inputData);
 
-  worksheet.addRow(risultatiHeader.value);
-  risultatiBody.value.forEach(row => {
-    worksheet.addRow(risultatiHeader.value.map(header => row[header]));
+
+  const dynamicHeaders = new Set();
+  dynamicHeaders.add('anno');
+  dynamicHeaders.add('eta');
+  dynamicHeaders.add('capitaleIniziale');
+  formInputs.entrateRicorrenti.forEach(e => dynamicHeaders.add(e.desc));
+  formInputs.entrateLumpSum.forEach(e => dynamicHeaders.add(e.desc));
+  formInputs.usciteRicorrenti.forEach(u => dynamicHeaders.add(u.desc));
+  formInputs.usciteLumpSum.forEach(u => dynamicHeaders.add(u.desc));
+  formInputs.debiti.forEach(d => {
+    dynamicHeaders.add(`Rata ${d.desc}`);
+    dynamicHeaders.add(`Capitale Residuo ${d.desc}`);
+  });
+  dynamicHeaders.add('totaleEntrate');
+  dynamicHeaders.add('totaleUscite');
+  dynamicHeaders.add('prelievo');
+  dynamicHeaders.add('utilePerditaLordo');
+  dynamicHeaders.add('impostaReddito');
+  dynamicHeaders.add('utilePerditaNetto');
+  dynamicHeaders.add('capitalePreRendimento');
+  dynamicHeaders.add('rendimentoLordo');
+  dynamicHeaders.add('impostaRendite');
+  dynamicHeaders.add('rendimentoNetto');
+  dynamicHeaders.add('capitaleFinale');
+
+  const finalHeaders = Array.from(dynamicHeaders);
+  worksheet.addRow(finalHeaders);
+
+  const headerMap = {};
+  finalHeaders.forEach((header, index) => {
+    headerMap[header] = index + 1;
   });
 
+  const getColumnLetter = (colIndex) => {
+    let letter = '';
+    while (colIndex > 0) {
+      letter = String.fromCharCode(65 + (colIndex - 1) % 26) + letter;
+      colIndex = Math.floor((colIndex - 1) / 26);
+    }
+    return letter;
+  };
+
+  ultimoRisultato.forEach((row, rowIndex) => {
+    const excelRow = worksheet.addRow({});
+    const currentRowNumber = rowIndex + 2;
+    const inflationRate = formInputs.tassoInflazione / 100;
+
+    finalHeaders.forEach(header => {
+      const colIndex = headerMap[header];
+      const cell = excelRow.getCell(colIndex);
+      // ... (tutta la logica per popolare le celle rimane qui)
+      const entrataRicorrente = formInputs.entrateRicorrenti.find(e => e.desc === header);
+      if (entrataRicorrente) {
+        const yearsPassed = `(${getColumnLetter(headerMap['anno'])}${currentRowNumber} - ${entrataRicorrente.inizio})`;
+        let formulaValue = `IF(AND(${getColumnLetter(headerMap['anno'])}${currentRowNumber}>=${entrataRicorrente.inizio}, ${getColumnLetter(headerMap['anno'])}${currentRowNumber}<=${entrataRicorrente.fine}), ${entrataRicorrente.valore}*POWER(1+${entrataRicorrente.incr}/100,${yearsPassed})*IF(${entrataRicorrente.isTodayValue},POWER(1+${inflationRate},${yearsPassed}),1),0)`;
+        cell.value = { formula: formulaValue, result: row[header] };
+        return;
+      }
+      const uscitaRicorrente = formInputs.usciteRicorrenti.find(u => u.desc === header);
+      if (uscitaRicorrente) {
+        const yearsPassed = `(${getColumnLetter(headerMap['anno'])}${currentRowNumber} - ${uscitaRicorrente.inizio})`;
+        const specificInflation = uscitaRicorrente.inflazioneSpecifica > 0 ? uscitaRicorrente.inflazioneSpecifica / 100 : inflationRate;
+        let formulaValue = `IF(AND(${getColumnLetter(headerMap['anno'])}${currentRowNumber}>=${uscitaRicorrente.inizio}, ${getColumnLetter(headerMap['anno'])}${currentRowNumber}<=${uscitaRicorrente.fine}), ${uscitaRicorrente.valore}*POWER(1+${uscitaRicorrente.incr}/100,${yearsPassed})*IF(${uscitaRicorrente.isTodayValue},POWER(1+${specificInflation},${yearsPassed}),1),0)`;
+        cell.value = { formula: formulaValue, result: row[header] };
+        return;
+      }
+      const entrataLumpSum = formInputs.entrateLumpSum.find(e => e.desc === header);
+      if (entrataLumpSum) {
+        let formulaValue = `IF(${getColumnLetter(headerMap['anno'])}${currentRowNumber}=${entrataLumpSum.anno}, ${entrataLumpSum.importo}, 0)`;
+        cell.value = { formula: formulaValue, result: row[header] };
+        return;
+      }
+      const uscitaLumpSum = formInputs.usciteLumpSum.find(u => u.desc === header);
+      if (uscitaLumpSum) {
+        let formulaValue = `IF(${getColumnLetter(headerMap['anno'])}${currentRowNumber}=${uscitaLumpSum.anno}, ${uscitaLumpSum.importo}, 0)`;
+        cell.value = { formula: formulaValue, result: row[header] };
+        return;
+      }
+      const rataDebito = formInputs.debiti.find(d => `Rata ${d.desc}` === header);
+      if (rataDebito) {
+        cell.value = row[header];
+        return;
+      }
+      const capitaleResiduoDebito = formInputs.debiti.find(d => `Capitale Residuo ${d.desc}` === header);
+      if (capitaleResiduoDebito) {
+        cell.value = row[header];
+        return;
+      }
+      switch (header) {
+        case 'capitaleIniziale':
+          if (rowIndex === 0) {
+            cell.value = row[header];
+          } else {
+            const prevCapitaleFinaleCol = getColumnLetter(headerMap['capitaleFinale']);
+            cell.value = { formula: `=${prevCapitaleFinaleCol}${currentRowNumber - 1}`, result: row[header] };
+          }
+          break;
+        case 'totaleEntrate':
+          const entrateCols = formInputs.entrateRicorrenti.map(e => getColumnLetter(headerMap[e.desc])).concat(formInputs.entrateLumpSum.map(e => getColumnLetter(headerMap[e.desc])));
+          if (entrateCols.length > 0) {
+            cell.value = { formula: `SUM(${entrateCols.map(col => `${col}${currentRowNumber}`).join(',')})`, result: row[header] };
+          } else {
+            cell.value = row[header];
+          }
+          break;
+        case 'totaleUscite':
+          const usciteCols = formInputs.usciteRicorrenti.map(u => getColumnLetter(headerMap[u.desc])).concat(formInputs.usciteLumpSum.map(u => getColumnLetter(headerMap[u.desc])));
+          const debitiRataCols = formInputs.debiti.map(d => getColumnLetter(headerMap[`Rata ${d.desc}`]));
+          let sumFormulaParts = [];
+          if (usciteCols.length > 0) { sumFormulaParts.push(usciteCols.map(col => `${col}${currentRowNumber}`).join(',')); }
+          if (debitiRataCols.length > 0) { sumFormulaParts.push(debitiRataCols.map(col => `${col}${currentRowNumber}`).join(',')); }
+          if (sumFormulaParts.length > 0) {
+            cell.value = { formula: `SUM(${sumFormulaParts.join(',')})`, result: row[header] };
+          } else {
+            cell.value = row[header];
+          }
+          break;
+        case 'utilePerditaLordo':
+          const totaleEntrateCol = getColumnLetter(headerMap['totaleEntrate']);
+          const totaleUsciteCol = getColumnLetter(headerMap['totaleUscite']);
+          cell.value = { formula: `=${totaleEntrateCol}${currentRowNumber} - ${totaleUsciteCol}${currentRowNumber}`, result: row[header] };
+          break;
+        case 'utilePerditaNetto':
+          const utilePerditaLordoCol = getColumnLetter(headerMap['utilePerditaLordo']);
+          const impostaRedditoCol = getColumnLetter(headerMap['impostaReddito']);
+          cell.value = { formula: `=${utilePerditaLordoCol}${currentRowNumber} - ${impostaRedditoCol}${currentRowNumber}`, result: row[header] };
+          break;
+        case 'capitalePreRendimento':
+          const capitaleInizialeCol = getColumnLetter(headerMap['capitaleIniziale']);
+          const utilePerditaNettoCol = getColumnLetter(headerMap['utilePerditaNetto']);
+          cell.value = { formula: `=${capitaleInizialeCol}${currentRowNumber} + ${utilePerditaNettoCol}${currentRowNumber}`, result: row[header] };
+          break;
+        case 'rendimentoNetto':
+          const rendimentoLordoCol = getColumnLetter(headerMap['rendimentoLordo']);
+          const impostaRenditeCol = getColumnLetter(headerMap['impostaRendite']);
+          cell.value = { formula: `=${rendimentoLordoCol}${currentRowNumber} - ${impostaRenditeCol}${currentRowNumber}`, result: row[header] };
+          break;
+        case 'capitaleFinale':
+          const capitalePreRendimentoCol = getColumnLetter(headerMap['capitalePreRendimento']);
+          const rendimentoNettoColForCF = getColumnLetter(headerMap['rendimentoNetto']);
+          cell.value = { formula: `=${capitalePreRendimentoCol}${currentRowNumber} + ${rendimentoNettoColForCF}${currentRowNumber}`, result: row[header] };
+          break;
+        default:
+          cell.value = row[header];
+          break;
+      }
+    });
+
+    // *** INIZIO BLOCCO SPOSTATO E CORRETTO ***
+    // Applica lo stile DOPO aver popolato la riga
+    if (row.capitaleIniziale <= 0) {
+      excelRow.eachCell({ includeEmpty: true }, (cell) => {
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFFF9999' } // Un rosso più chiaro per leggibilità
+        };
+      });
+    }
+    // *** FINE BLOCCO SPOSTATO E CORRETTO ***
+  });
+
+  // ... (tutta la logica per creare i grafici rimane invariata)
   const years = ultimoRisultato.map(r => r.anno);
-  const excludedHeaders = ['anno', 'eta'];
-  const metricsToPlot = risultatiHeader.value.filter(header => 
-    !excludedHeaders.includes(header.toLowerCase()) && 
-    typeof ultimoRisultato[0][header] === 'number'
-  );
-
-  for (const metric of metricsToPlot) {
-    const sanitizedTitle = metric.replace(/[*?:/\[\]]/g, ''); // Rimuovi caratteri non validi
+  for (const metric of finalHeaders) {
+    const sanitizedTitle = metric.replace(/[*?:/\[\]]/g, '');
     const chartWorksheet = workbook.addWorksheet(`Grafico ${sanitizedTitle}`);
-
     const data = ultimoRisultato.map(r => ({ x: r.anno, y: r[metric] }));
-
     chartWorksheet.addRow(['Anno', metric]);
     data.forEach(d => chartWorksheet.addRow([d.x, d.y]));
-
     const configuration = {
       type: 'line',
       data: {
         labels: years,
-        datasets: [
-          {
-            label: metric,
-            data: data.map(d => d.y),
-            borderColor: '#2196F3',
-            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-            fill: true,
-            tension: 0.2,
-          },
-        ],
+        datasets: [{
+          label: metric,
+          data: data.map(d => d.y),
+          borderColor: '#2196F3',
+          backgroundColor: 'rgba(33, 150, 243, 0.1)',
+          fill: true,
+          tension: 0.2,
+        }],
       },
       options: {
-        plugins: {
-          title: {
-            display: true,
-            text: `Andamento ${metric}`,
-          },
-        },
-        scales: {
-          x: { title: { display: true, text: 'Anno' } },
-          y: { title: { display: true, text: 'Importo' } },
-        },
+        plugins: { title: { display: true, text: `Andamento ${metric}` } },
+        scales: { x: { title: { display: true, text: 'Anno' } }, y: { title: { display: true, text: 'Importo' } } },
       },
     };
-
     const offscreenCanvas = document.createElement('canvas');
     offscreenCanvas.width = 800;
     offscreenCanvas.height = 400;
     offscreenCanvas.style.display = 'none';
     document.body.appendChild(offscreenCanvas);
     const ctx = offscreenCanvas.getContext('2d');
-
     if (ctx) {
       const chartInstance = new Chart(ctx, configuration);
-      await new Promise(resolve => {
-        chartInstance.update();
-        setTimeout(() => {
-          resolve();
-        }, 100);
-      });
-
+      await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 100); });
       const imageDataUrl = chartInstance.toBase64Image();
       chartInstance.destroy();
       document.body.removeChild(offscreenCanvas);
       const base64Data = imageDataUrl.replace(/^data:image\/png;base64,/, '');
       const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
-      chartWorksheet.addImage(imageId, {
-        tl: { col: 4, row: 1 },
-        br: { col: 13, row: 20 },
-      });
+      chartWorksheet.addImage(imageId, { tl: { col: 4, row: 1 }, br: { col: 13, row: 20 } });
     }
   }
-
-  // Grafico principale: Capitale Iniziale vs. Finale
   const capitaleInizialeData = ultimoRisultato.map(r => r.capitaleIniziale);
   const capitaleFinaleData = ultimoRisultato.map(r => r.capitaleFinale);
-
   const mainChartConfig = {
     type: 'bar',
     data: {
       labels: years,
-      datasets: [
-        {
-          label: 'Capitale Iniziale',
-          data: capitaleInizialeData,
-          backgroundColor: 'rgba(255, 99, 132, 0.5)',
-        },
-        {
-          label: 'Capitale Finale',
-          data: capitaleFinaleData,
-          backgroundColor: 'rgba(54, 162, 235, 0.5)',
-        }
-      ]
+      datasets: [{
+        label: 'Capitale Iniziale',
+        data: capitaleInizialeData,
+        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+      }, {
+        label: 'Capitale Finale',
+        data: capitaleFinaleData,
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+      }]
     },
     options: {
-      plugins: {
-        title: {
-          display: true,
-          text: 'Confronto Capitale Iniziale vs. Finale'
-        }
-      },
-      scales: {
-        y: { beginAtZero: true }
-      }
+      plugins: { title: { display: true, text: 'Confronto Capitale Iniziale vs. Finale' } },
+      scales: { y: { beginAtZero: true } }
     }
   };
-
   const mainCanvas = document.createElement('canvas');
   mainCanvas.width = 1200;
   mainCanvas.height = 600;
   mainCanvas.style.display = 'none';
   document.body.appendChild(mainCanvas);
   const mainCtx = mainCanvas.getContext('2d');
-
   if (mainCtx) {
     const mainChartInstance = new Chart(mainCtx, mainChartConfig);
-    await new Promise(resolve => {
-      mainChartInstance.update();
-      setTimeout(() => { resolve(); }, 100);
-    });
-
+    await new Promise(resolve => { mainChartInstance.update(); setTimeout(() => { resolve(); }, 100); });
     const mainImageDataUrl = mainChartInstance.toBase64Image();
     mainChartInstance.destroy();
     document.body.removeChild(mainCanvas);
-
     const mainBase64Data = mainImageDataUrl.replace(/^data:image\/png;base64,/, '');
-    const mainImageId = workbook.addImage({
-      base64: mainBase64Data,
-      extension: 'png',
-    });
-
-    const startCol = risultatiHeader.value.length + 2;
-    worksheet.addImage(mainImageId, {
-      tl: { col: startCol, row: 1 },
-      br: { col: startCol + 12, row: 25 }
-    });
+    const mainImageId = workbook.addImage({ base64: mainBase64Data, extension: 'png' });
+    const startCol = finalHeaders.length + 2;
+    worksheet.addImage(mainImageId, { tl: { col: startCol, row: 1 }, br: { col: startCol + 12, row: 25 } });
   }
 
   workbook.xlsx.writeBuffer().then(data => {
