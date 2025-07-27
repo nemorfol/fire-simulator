@@ -7,8 +7,7 @@
     <title>Sankey Chart</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
       body { font-family: 'Inter', sans-serif; }
       .sankey-link {
@@ -25,7 +24,7 @@
     <div id="chart"></div>
     <script>
       const SankeyChart = {
-        template: `<div><svg ref="svgElement"></svg></div>`,
+        template: `<div><div ref="plotlyDiv" style="width:900px;height:500px;"></div></div>`,
         props: ['data'],
         mounted() {
           this.drawSankey();
@@ -35,58 +34,9 @@
         },
         methods: {
           drawSankey() {
-            if (!this.data || !this.$refs.svgElement) return;
-            const { nodes, links } = JSON.parse(JSON.stringify(this.data));
-            const width = 900;
-            const height = 500;
-            const svg = d3.select(this.$refs.svgElement).attr('width', width).attr('height', height);
-            svg.selectAll('*').remove();
-
-            const sankeyGenerator = d3.sankey().nodeWidth(25).nodePadding(15).extent([[1, 1], [width - 1, height - 6]]);
-            const { nodes: graphNodes, links: graphLinks } = sankeyGenerator({ nodes, links });
-
-            const color = d3.scaleOrdinal(d3.schemeCategory10);
-
-            // Links
-            const link = svg.append('g')
-              .attr('fill', 'none')
-              .attr('stroke-opacity', 0.5)
-              .selectAll('g')
-              .data(graphLinks)
-              .join('g')
-              .style('mix-blend-mode', 'multiply');
-
-            link.append('path')
-              .attr('d', d3.sankeyLinkHorizontal())
-              .attr('class', 'sankey-link')
-              .attr('stroke-width', d => Math.max(1, d.width));
-
-            link.append('title')
-              .text(d => `${d.source.name} → ${d.target.name}\n${d.value}`);
-
-            // Nodes
-            svg.append('g')
-              .selectAll('rect')
-              .data(graphNodes)
-              .join('rect')
-              .attr('x', d => d.x0)
-              .attr('y', d => d.y0)
-              .attr('height', d => d.y1 - d.y0)
-              .attr('width', d => d.x1 - d.x0)
-              .attr('fill', d => color(d.name))
-              .append('title')
-              .text(d => `${d.name}\n${d.value}`);
-
-            // Node Labels
-            svg.append('g')
-              .style('font', '12px sans-serif')
-              .selectAll('text')
-              .data(graphNodes)
-              .join('text')
-              .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
-              .attr('y', d => (d.y1 + d.y0) / 2)
-              .attr('dy', '0.35em')
-              .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end').text(d => d.name);
+            if (!this.data || !this.$refs.plotlyDiv) return;
+            const plotlyData = JSON.parse(this.data);
+            Plotly.newPlot(this.$refs.plotlyDiv, plotlyData.data, plotlyData.layout);
           }
         }
       };
@@ -99,7 +49,7 @@
           };
         },
         mounted() {
-          this.sankeyData = JSON.parse(localStorage.getItem('sankeyData'));
+          this.sankeyData = localStorage.getItem('sankeyData');
         },
         template: `<SankeyChart :data="sankeyData" />`
       });
