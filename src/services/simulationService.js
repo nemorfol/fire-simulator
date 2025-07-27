@@ -1,5 +1,5 @@
 import { ref, reactive, computed } from "vue";
-import { leggiInput } from "./financialCalculator";
+import { leggiInput, calculateVpwWithdrawal } from "./financialCalculator";
 
 // Dati storici per backtest
 const historicalData = {
@@ -84,7 +84,8 @@ export function calcolaProiezione(
   annoInizio,
   annoFine,
   isMonteCarloRun = false,
-  historicalReturns = null
+  historicalReturns = null,
+  simulazioneStartYear // Nuovo parametro
 ) {
   const inputs = JSON.parse(JSON.stringify(baseInputs));
   
@@ -95,7 +96,10 @@ export function calcolaProiezione(
     capitalePerConto[asset.nome] = inputs.impostazioni.capitaleIniziale * (asset.quota / 100);
   });
   let etaCorrente = inputs.impostazioni.etaIniziale;
-  
+
+  // Nuove variabili per la strategia Guardrails
+  let initialRetirementCapital = 0; // Capitale al momento del ritiro
+  let prelievoCorrente = 0; // Prelievo annuale corrente per Guardrails
 
   let debitiAttivi = inputs.debiti.map(debito => ({
     ...debito,
@@ -115,13 +119,28 @@ export function calcolaProiezione(
       capitaleIniziale: Object.values(capitalePerConto).reduce((sum, val) => sum + val, 0),
     };
 
+    // Calcolo del capitale in termini reali
+    const inflationFactor = Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - simulazioneStartYear);
+    risultatoAnno.capitaleInizialeReale = risultatoAnno.capitaleIniziale / inflationFactor;
+
+    // INIZIALIZZA TUTTE LE POSSIBILI VOCI A 0 PER QUEST'ANNO
+    inputs.entrate.ricorrenti.forEach(e => { risultatoAnno[e.desc] = 0; });
+    inputs.entrate.lumpSum.forEach(e => { risultatoAnno[e.desc] = 0; });
+    inputs.uscite.ricorrenti.forEach(u => { risultatoAnno[u.desc] = 0; });
+    inputs.uscite.lumpSum.forEach(u => { risultatoAnno[u.desc] = 0; });
+    inputs.debiti.forEach(d => {
+      risultatoAnno[`Rata ${d.desc}`] = 0;
+      risultatoAnno[`Capitale Residuo ${d.desc}`] = 0;
+    });
+    // FINE INIZIALIZZAZIONE
+
     let totaleEntrateLordeOrdinarie = 0;
     let totaleEntrateLordeSostitutive = 0;
     let totaleEntrateLordeEsenti = 0;
     let imposteSostitutive = 0;
 
     inputs.entrate.ricorrenti.forEach((e) => {
-      const currentInFaseDiRitiro = inFaseDiRitiro; // Variabile locale per garantire lo scope
+      const currentInFaseDiRitiro = inFaseDiRitiro;
       if (
         anno >= e.inizio &&
         anno <= e.fine &&
@@ -132,9 +151,8 @@ export function calcolaProiezione(
         
         if (e.isTodayValue) {
           valoreCorrente *= Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, yearsPassed);
-          
         }
-        risultatoAnno[e.desc] = valoreCorrente;
+        risultatoAnno[e.desc] += valoreCorrente; // Somma al valore già inizializzato a 0
         if (e.taxRegime === "ordinaria") {
           totaleEntrateLordeOrdinarie += valoreCorrente;
         } else if (e.taxRegime === "sostitutiva") {
@@ -143,14 +161,14 @@ export function calcolaProiezione(
         } else if (e.taxRegime === "esente") {
           totaleEntrateLordeEsenti += valoreCorrente;
         }
-      } else {
-        risultatoAnno[e.desc] = 0;
       }
     });
 
     risultatoAnno.entrateLumpSum = inputs.entrate.lumpSum
       .filter((e) => e.anno === anno)
       .reduce((s, e) => {
+        // Aggiorna anche la voce specifica in risultatoAnno
+        risultatoAnno[e.desc] += e.importo;
         return s + e.importo;
       }, 0);
 
@@ -191,21 +209,25 @@ export function calcolaProiezione(
         if (u.isTodayValue) {
           valoreCorrenteUscita *= Math.pow(1 + inflazioneApplicata / 100, yearsPassed);
         }
-        risultatoAnno[u.desc] = valoreCorrenteUscita;
+        risultatoAnno[u.desc] += valoreCorrenteUscita; // Somma al valore già inizializzato a 0
         totaleUsciteRicorrenti += valoreCorrenteUscita;
       } else {
-        risultatoAnno[u.desc] = 0;
+        risultatoAnno[u.desc] = (risultatoAnno[u.desc] || 0); // Ensure property exists even if 0
       }
     });
 
-    const usciteLumpSum = inputs.uscite.lumpSum
+    inputs.uscite.lumpSum.forEach((u) => {
+      if (u.anno === anno) {
+        risultatoAnno[u.desc] += u.importo; // Somma al valore già inizializzato a 0
+      }
+    });
+    risultatoAnno.usciteLumpSum = inputs.uscite.lumpSum
       .filter((u) => u.anno === anno)
       .reduce((s, u) => {
         return s + u.importo;
       }, 0);
-    risultatoAnno.usciteLumpSum = usciteLumpSum;
     
-    totalExpensesForYear = totaleUsciteRicorrenti + usciteLumpSum + totaleRataDebiti;
+    totalExpensesForYear = totaleUsciteRicorrenti + risultatoAnno.usciteLumpSum + totaleRataDebiti;
 
     
 
@@ -218,11 +240,31 @@ export function calcolaProiezione(
         const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100); // Usiamo regolaFIRE come base per il prelievo iniziale
         const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
         risultatoAnno.prelievo = adjustedWithdrawal;
+    } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'vpw') {
+        const withdrawalAmount = calculateVpwWithdrawal(risultatoAnno.capitaleIniziale, etaCorrente, inputs.impostazioni.etaRitiro + 30); // Assuming a 30-year retirement
+        risultatoAnno.prelievo = withdrawalAmount;
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'regolaFIRE') {
         const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100);
         const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
         risultatoAnno.prelievo = adjustedWithdrawal;
-    }
+    } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'guardrails') {
+        if (anno === inputs.impostazioni.etaRitiro) {
+          initialRetirementCapital = risultatoAnno.capitaleIniziale; // Memorizza il capitale all'inizio del ritiro
+          prelievoCorrente = initialRetirementCapital * (inputs.impostazioni.percentualePrelievo / 100);
+        } else {
+          // Le soglie sono basate sul capitale iniziale al ritiro
+          const sogliaSuperiore = initialRetirementCapital * (1 + inputs.impostazioni.guardrailUpper / 100);
+          const sogliaInferiore = initialRetirementCapital * (1 - inputs.impostazioni.guardrailLower / 100);
+
+          // Confronta il capitale corrente con le soglie
+          if (risultatoAnno.capitaleIniziale > sogliaSuperiore) {
+            prelievoCorrente *= 1.10; // Aumenta del 10%
+          } else if (risultatoAnno.capitaleIniziale < sogliaInferiore) {
+            prelievoCorrente *= 0.90; // Diminuisci del 10%
+          }
+        }
+        risultatoAnno.prelievo = prelievoCorrente;
+      }
 
     
 
@@ -233,7 +275,7 @@ export function calcolaProiezione(
         : 0;
 
     const imposteTotali = impostaRedditoOrdinario + imposteSostitutive;
-    const netCashFlow = totalIncomeForYear - totalExpensesForYear - imposteTotali;
+    const netCashFlow = totalIncomeForYear - totalExpensesForYear - imposteTotali - risultatoAnno.prelievo;
 
     risultatoAnno.totaleEntrate = totalIncomeForYear;
     risultatoAnno.totaleUscite = totalExpensesForYear;
@@ -296,6 +338,29 @@ export function calcolaProiezione(
     const capitaleFinale = Math.max(0, Object.values(capitalePerConto).reduce((sum, val) => sum + val, 0));
     risultatoAnno.capitaleFinale = capitaleFinale;
     risultatoAnno.capitalePerConto = { ...capitalePerConto };
+
+    // Calcolo del capitale finale in termini reali
+    risultatoAnno.capitaleFinaleReale = capitaleFinale / inflationFactor;
+
+    // Calcolo del Tasso di Prelievo (Withdrawal Rate)
+    if (risultatoAnno.capitaleIniziale > 0) {
+      risultatoAnno.withdrawalRate = (risultatoAnno.totaleUscite + risultatoAnno.prelievo) / risultatoAnno.capitaleIniziale * 100;
+    } else {
+      risultatoAnno.withdrawalRate = 0;
+    }
+
+    // Calcolo della variazione percentuale del capitale
+    if (risultatiFinali.length > 0) {
+      const capitalePrecedente = risultatiFinali[risultatiFinali.length - 1].capitaleFinale;
+      if (capitalePrecedente > 0) {
+        risultatoAnno.variazionePercentualeCapitale = ((capitaleFinale - capitalePrecedente) / capitalePrecedente) * 100;
+      } else {
+        risultatoAnno.variazionePercentualeCapitale = 0; // O un valore che indichi non calcolabile
+      }
+    } else {
+      risultatoAnno.variazionePercentualeCapitale = 0; // Primo anno, nessuna variazione precedente
+    }
+
     risultatiFinali.push(risultatoAnno);
 
     // Se il capitale scende a zero o meno, marca la simulazione come fallita
@@ -346,15 +411,34 @@ export function mostraRisultatiDeterministici(
       rendimentoLordo: r.rendimentoLordo,
       rendimentoNetto: r.rendimentoNetto,
       capitaleFinale: r.capitaleFinale,
+      capitaleInizialeReale: r.capitaleInizialeReale,
+      capitaleFinaleReale: r.capitaleFinaleReale,
+      withdrawalRate: r.withdrawalRate,
+      variazionePercentualeCapitale: r.variazionePercentualeCapitale,
     };
     return row;
   });
 
-  if (risultatiBodyRef.value.length > 0) {
-    risultatiHeaderRef.value = Object.keys(risultatiBodyRef.value[0]);
-  } else {
-    risultatiHeaderRef.value = [];
-  }
+  risultatiHeaderRef.value = [
+    "anno",
+    "eta",
+    "capitaleIniziale",
+    "totaleEntrate",
+    "totaleUscite",
+    "prelievo",
+    "utilePerditaLordo",
+    "impostaReddito",
+    "impostaRendite",
+    "utilePerditaNetto",
+    "capitalePreRendimento",
+    "rendimentoLordo",
+    "rendimentoNetto",
+    "capitaleFinale",
+    "capitaleInizialeReale",
+    "capitaleFinaleReale",
+    "withdrawalRate",
+    "variazionePercentualeCapitale",
+  ];
 
   datasetsCapitaleRef.value = [
     {
@@ -451,7 +535,7 @@ export function calcolaSimulazioneMonteCarlo(inputs, annoInizio, annoFine) {
 
   for (let i = 0; i < numeroSimulazioni; i++) {
     const inputsCopia = JSON.parse(JSON.stringify(inputs));
-    const { simulations, simulazioneFallita, etaEsaurimento } = calcolaProiezione(inputsCopia, annoInizio, annoFine, true);
+    const { simulations, simulazioneFallita, etaEsaurimento } = calcolaProiezione(inputsCopia, annoInizio, annoFine, true, null, annoInizio);
     allSimulations.push(simulations);
 
     if (simulazioneFallita) {
@@ -483,7 +567,7 @@ export function calcolaSimulazioneMonteCarlo(inputs, annoInizio, annoFine) {
 }
 
 export async function calcolaBacktest(inputs, annoInizio, annoFine) {
-  return calcolaProiezione(inputs, annoInizio, annoFine, false, historicalData);
+  return calcolaProiezione(inputs, annoInizio, annoFine, false, historicalData, annoInizio);
 }
 
 export async function avviaSimulazione(
@@ -537,7 +621,11 @@ export async function avviaSimulazione(
   saveScenarioBtnDisabledRef.value = false;
 
   const annoInizioSimulazione = Math.min(...anniCoinvolti);
-  const annoFineSimulazione = Math.max(...anniCoinvolti);
+  // Calcola l'anno massimo basato sull'età di ritiro + un'aspettativa di vita ragionevole
+  // o l'età massima dell'utente se specificata altrove.
+  // Per ora, userò un'età massima di 100 anni come default se non ci sono altri anni coinvolti.
+  const annoMassimoVita = formInputs.etaIniziale + (100 - formInputs.etaIniziale); // Assumiamo 100 anni come età massima di simulazione
+  const annoFineSimulazione = Math.max(...anniCoinvolti, annoMassimoVita);
 
   let results;
   switch (inputs.impostazioni.simMode) {
@@ -582,7 +670,10 @@ export async function avviaSimulazione(
       const deterministicResults = calcolaProiezione(
         inputs,
         annoInizioSimulazione,
-        annoFineSimulazione
+        annoFineSimulazione,
+        false,
+        null,
+        annoInizioSimulazione
       );
       mostraRisultatiDeterministici(
         deterministicResults.simulations, // Passa l'array delle simulazioni

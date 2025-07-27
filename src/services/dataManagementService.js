@@ -137,29 +137,24 @@ export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) 
       // ... (tutta la logica per popolare le celle rimane qui)
       const entrataRicorrente = formInputs.entrateRicorrenti.find(e => e.desc === header);
       if (entrataRicorrente) {
-        const yearsPassed = `(${getColumnLetter(headerMap['anno'])}${currentRowNumber} - ${entrataRicorrente.inizio})`;
-        let formulaValue = `IF(AND(${getColumnLetter(headerMap['anno'])}${currentRowNumber}>=${entrataRicorrente.inizio}, ${getColumnLetter(headerMap['anno'])}${currentRowNumber}<=${entrataRicorrente.fine}), ${entrataRicorrente.valore}*POWER(1+${entrataRicorrente.incr}/100,${yearsPassed})*IF(${entrataRicorrente.isTodayValue},POWER(1+${inflationRate},${yearsPassed}),1),0)`;
-        cell.value = { formula: formulaValue, result: row[header] };
+        cell.value = row[header];
         return;
       }
       const uscitaRicorrente = formInputs.usciteRicorrenti.find(u => u.desc === header);
       if (uscitaRicorrente) {
-        const yearsPassed = `(${getColumnLetter(headerMap['anno'])}${currentRowNumber} - ${uscitaRicorrente.inizio})`;
-        const specificInflation = uscitaRicorrente.inflazioneSpecifica > 0 ? uscitaRicorrente.inflazioneSpecifica / 100 : inflationRate;
-        let formulaValue = `IF(AND(${getColumnLetter(headerMap['anno'])}${currentRowNumber}>=${uscitaRicorrente.inizio}, ${getColumnLetter(headerMap['anno'])}${currentRowNumber}<=${uscitaRicorrente.fine}), ${uscitaRicorrente.valore}*POWER(1+${uscitaRicorrente.incr}/100,${yearsPassed})*IF(${uscitaRicorrente.isTodayValue},POWER(1+${specificInflation},${yearsPassed}),1),0)`;
-        cell.value = { formula: formulaValue, result: row[header] };
+        cell.value = row[header];
         return;
       }
       const entrataLumpSum = formInputs.entrateLumpSum.find(e => e.desc === header);
       if (entrataLumpSum) {
-        let formulaValue = `IF(${getColumnLetter(headerMap['anno'])}${currentRowNumber}=${entrataLumpSum.anno}, ${entrataLumpSum.importo}, 0)`;
-        cell.value = { formula: formulaValue, result: row[header] };
+        // Modifica qui: usa direttamente row[header]
+        cell.value = row[header];
         return;
       }
       const uscitaLumpSum = formInputs.usciteLumpSum.find(u => u.desc === header);
       if (uscitaLumpSum) {
-        let formulaValue = `IF(${getColumnLetter(headerMap['anno'])}${currentRowNumber}=${uscitaLumpSum.anno}, ${uscitaLumpSum.importo}, 0)`;
-        cell.value = { formula: formulaValue, result: row[header] };
+        // Modifica qui: usa direttamente row[header]
+        cell.value = row[header];
         return;
       }
       const rataDebito = formInputs.debiti.find(d => `Rata ${d.desc}` === header);
@@ -249,6 +244,10 @@ export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) 
   // ... (tutta la logica per creare i grafici rimane invariata)
   const years = ultimoRisultato.map(r => r.anno);
   for (const metric of finalHeaders) {
+    // Salta la creazione di grafici per 'anno' ed 'eta'
+    if (metric === 'anno' || metric === 'eta') {
+      continue;
+    }
     const sanitizedTitle = metric.replace(/[*?:/\[\]]/g, '');
     const chartWorksheet = workbook.addWorksheet(`Grafico ${sanitizedTitle}`);
     const data = ultimoRisultato.map(r => ({ x: r.anno, y: r[metric] }));

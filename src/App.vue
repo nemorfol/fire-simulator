@@ -363,17 +363,7 @@ async function handleAvviaSimulazione() {
     mostraNotifica
   );
 
-  if (formInputs.simMode !== 'montecarlo') {
-    datasetsCapitale.value = [
-      {
-        label: 'Scenario Corrente',
-        data: res.map((r) => r.capitaleFinale),
-        fill: false,
-        borderColor: 'rgb(75, 192, 192)',
-        tension: 0.1,
-      },
-    ];
-  }
+  
 }
 
 function handleShowSankey(data) {
@@ -406,12 +396,12 @@ function handleShowSankey(data) {
       if (item.isTodayValue) {
         value *= Math.pow(1 + inflationRate, yearsPassed);
       }
-      detailedIncomes[item.desc] = value;
+      detailedIncomes[item.desc] = (detailedIncomes[item.desc] || 0) + value;
     }
   });
   formInputs.entrateLumpSum.forEach(item => {
     if (currentYear === item.anno) {
-      detailedIncomes[item.desc] = item.importo;
+      detailedIncomes[item.desc] = (detailedIncomes[item.desc] || 0) + item.importo;
     }
   });
 
@@ -424,12 +414,12 @@ function handleShowSankey(data) {
       if (item.isTodayValue) {
         value *= Math.pow(1 + specificInflation, yearsPassed);
       }
-      detailedExpenses[item.desc] = value;
+      detailedExpenses[item.desc] = (detailedExpenses[item.desc] || 0) + value;
     }
   });
   formInputs.usciteLumpSum.forEach(item => {
     if (currentYear === item.anno) {
-      detailedExpenses[item.desc] = item.importo;
+      detailedExpenses[item.desc] = (detailedExpenses[item.desc] || 0) + item.importo;
     }
   });
 
@@ -791,6 +781,8 @@ onMounted(() => {
               :risultatiBody="risultatiBody"
               :datiFIRE="datiFIRE"
               :formatterValuta="formatterValuta"
+              :etaRitiro="formInputs.etaRitiro"
+              :fullResults="ultimoRisultato"
               @show-sankey="handleShowSankey"
             />
           </div>

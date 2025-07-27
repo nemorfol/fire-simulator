@@ -12,6 +12,8 @@ export function leggiInput(formInputs) {
       
       strategiaPrelievo: formInputs.strategiaPrelievo,
       percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,
+      guardrailUpper: parseFloat(formInputs.guardrailUpper) || 0,
+      guardrailLower: parseFloat(formInputs.guardrailLower) || 0,
       scenarioCrisi: formInputs.scenarioCrisi,
       rendimentoCapitale: formInputs.assetAllocation.reduce(
         (sum, asset) =>
@@ -126,4 +128,20 @@ export function leggiInput(formInputs) {
   }
 
   return inputs;
+}
+
+/**
+ * Calcola il prelievo annuale utilizzando la strategia Variable Percentage Withdrawal (VPW).
+ * @param {number} portfolioValue - Il valore attuale del portafoglio.
+ * @param {number} age - L'età attuale.
+ * @param {number} lifeExpectancy - L'aspettativa di vita.
+ * @returns {number} Il prelievo annuale calcolato.
+ */
+export function calculateVpwWithdrawal(portfolioValue, age, lifeExpectancy) {
+  if (age >= lifeExpectancy) {
+    return portfolioValue;
+  }
+  const remainingYears = lifeExpectancy - age;
+  const withdrawalRate = 1 / remainingYears;
+  return portfolioValue * withdrawalRate;
 }

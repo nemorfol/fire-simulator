@@ -21,7 +21,9 @@ const localFormInputs = computed({
 
 const showMonteCarloParams = computed(() => localFormInputs.value.simMode === 'montecarlo');
 const showFaseRitiroParams = computed(() => localFormInputs.value.isRetirement);
-const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPrelievo === 'percentualeCostante');
+const showPercentualePrelievo = computed(() => {
+  return ['percentualeCostante', 'guardrails'].includes(localFormInputs.value.strategiaPrelievo);
+});
 
 </script>
 
@@ -124,6 +126,8 @@ const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPr
           <option value="regolaFIRE">Regola FIRE (Fisso)</option>
           <option value="percentualeCostante">Percentuale Costante</option>
           <option value="prelievoFissoInflazione">Prelievo Fisso (Aggiustato per Inflazione)</option>
+          <option value="vpw">Variable Percentage Withdrawal (VPW)</option>
+          <option value="guardrails">Guardrails</option>
         </select>
       </div>
 
@@ -136,6 +140,16 @@ const showPercentualePrelievo = computed(() => localFormInputs.value.strategiaPr
           v-model="localFormInputs.percentualePrelievo"
           step="0.1"
         />
+      </div>
+      <div id="guardrails-params" v-show="localFormInputs.strategiaPrelievo === 'guardrails'">
+        <div>
+          <label for="guardrailUpper" class="block text-sm mb-1">Soglia Superiore (%)</label>
+          <input type="number" id="guardrailUpper" v-model="localFormInputs.guardrailUpper" step="1" />
+        </div>
+        <div>
+          <label for="guardrailLower" class="block text-sm mb-1">Soglia Inferiore (%)</label>
+          <input type="number" id="guardrailLower" v-model="localFormInputs.guardrailLower" step="1" />
+        </div>
       </div>
       <div id="monte-carlo-params" v-show="showMonteCarloParams">
         <label for="numeroSimulazioni" class="block text-sm mb-1">Numero Simulazioni</label>
