@@ -11,6 +11,14 @@
     <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3"></script>
     <style>
       body { font-family: 'Inter', sans-serif; }
+      .sankey-link {
+        fill: none;
+        stroke: #000;
+        stroke-opacity: 0.2;
+      }
+      .sankey-link:hover {
+        stroke-opacity: 0.5;
+      }
     </style>
     </head>
   <body>
@@ -29,15 +37,56 @@
           drawSankey() {
             if (!this.data || !this.$refs.svgElement) return;
             const { nodes, links } = JSON.parse(JSON.stringify(this.data));
-            const width = 800;
-            const height = 400;
+            const width = 900;
+            const height = 500;
             const svg = d3.select(this.$refs.svgElement).attr('width', width).attr('height', height);
             svg.selectAll('*').remove();
-            const sankeyGenerator = d3.sankey().nodeWidth(15).nodePadding(10).extent([[1, 1], [width - 1, height - 6]]);
+
+            const sankeyGenerator = d3.sankey().nodeWidth(25).nodePadding(15).extent([[1, 1], [width - 1, height - 6]]);
             const { nodes: graphNodes, links: graphLinks } = sankeyGenerator({ nodes, links });
-            svg.append('g').selectAll('rect').data(graphNodes).join('rect').attr('x', d => d.x0).attr('y', d => d.y0).attr('height', d => d.y1 - d.y0).attr('width', d => d.x1 - d.x0).attr('fill', '#69b3a2');
-            svg.append('g').attr('fill', 'none').attr('stroke-opacity', 0.5).selectAll('g').data(graphLinks).join('path').attr('d', d3.sankeyLinkHorizontal()).attr('stroke', '#000').attr('stroke-width', d => Math.max(1, d.width));
-            svg.append('g').style('font', '10px sans-serif').selectAll('text').data(graphNodes).join('text').attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6).attr('y', d => (d.y1 + d.y0) / 2).attr('dy', '0.35em').attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end').text(d => d.name);
+
+            const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+            // Links
+            const link = svg.append('g')
+              .attr('fill', 'none')
+              .attr('stroke-opacity', 0.5)
+              .selectAll('g')
+              .data(graphLinks)
+              .join('g')
+              .style('mix-blend-mode', 'multiply');
+
+            link.append('path')
+              .attr('d', d3.sankeyLinkHorizontal())
+              .attr('class', 'sankey-link')
+              .attr('stroke-width', d => Math.max(1, d.width));
+
+            link.append('title')
+              .text(d => `${d.source.name} → ${d.target.name}\n${d.value}`);
+
+            // Nodes
+            svg.append('g')
+              .selectAll('rect')
+              .data(graphNodes)
+              .join('rect')
+              .attr('x', d => d.x0)
+              .attr('y', d => d.y0)
+              .attr('height', d => d.y1 - d.y0)
+              .attr('width', d => d.x1 - d.x0)
+              .attr('fill', d => color(d.name))
+              .append('title')
+              .text(d => `${d.name}\n${d.value}`);
+
+            // Node Labels
+            svg.append('g')
+              .style('font', '12px sans-serif')
+              .selectAll('text')
+              .data(graphNodes)
+              .join('text')
+              .attr('x', d => d.x0 < width / 2 ? d.x1 + 6 : d.x0 - 6)
+              .attr('y', d => (d.y1 + d.y0) / 2)
+              .attr('dy', '0.35em')
+              .attr('text-anchor', d => d.x0 < width / 2 ? 'start' : 'end').text(d => d.name);
           }
         }
       };

@@ -1,8 +1,7 @@
-Refactor: Migliorata gestione esportazione dati e impostazioni simulazione
+feat: Miglioramenti al grafico di Sankey e pulizia console
 
-Questo commit include diverse modifiche per migliorare la gestione dell'esportazione dei dati e la configurazione delle impostazioni di simulazione:
-
-- **Ripristinate funzioni di esportazione Excel/PDF in `App.vue`:** Le funzioni `handleExportExcel`, `handleExportCapitalExcel`, `handleExportCashFlowExcel` e `handleExportPdf` sono state ripristinate in `src/App.vue` per risolvere l'errore "is not a function" e garantire la corretta funzionalità di esportazione.
-- **Rimosso `isRetirement` da `formInputs` e `SimulationSettings.vue`:** La proprietà `isRetirement` è stata rimossa dalle impostazioni del form e dal componente `SimulationSettings.vue` in quanto la fase di ritiro è ora determinata dinamicamente dall'età di ritiro.
-- **Spostata gestione import/export JSON in `JsonDataManagement.vue`:** La logica per l'importazione e l'esportazione dei dati JSON è stata incapsulata nel nuovo componente `src/components/JsonDataManagement.vue` per una migliore modularità e pulizia del codice in `App.vue`.
-- **Aggiornato `pdfGeneratorService.js`:** Il servizio di generazione PDF è stato aggiornato per accettare i parametri corretti e gestire l'array `ultimoRisultato`.
+- Implementato grafico di Sankey dettagliato con Plotly.js, mostrando singole voci di entrate/uscite.
+- Aggiornata la guida utente (public/guide.html) per riflettere le nuove funzionalità del grafico di Sankey e la visualizzazione delle righe rosse.
+- Ripristinati i console.warn in src/components/CapitalChart.vue.
+- Rimossi i console.log da src/services/simulationService.js per migliorare le performance.
+- Eliminati file obsoleti (src/indexold.html, src/parametri.jpg).
