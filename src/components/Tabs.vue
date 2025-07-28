@@ -25,7 +25,7 @@ const props = defineProps({
   activeTab: String
 });
 
-const activeTabTitle = ref(props.activeTab);
+const activeTabTitle = ref(props.activeTab || props.tabs[0]);
 
 const selectTab = (title) => {
   activeTabTitle.value = title;

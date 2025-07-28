@@ -7,16 +7,23 @@ const historicalData = {
 };
 
 const crisisScenarios = {
-  dotCom: [
-    -0.091, // 2000
-    -0.1189, // 2001
-    -0.221, // 2002
-    0.2868, // 2003 (recupero)
-  ],
-  greatRecession: [
-    -0.37, // 2008
-    0.2646, // 2009 (recupero)
-  ],
+  dotCom: {
+    startYear: 2000,
+    endYear: 2002,
+    returns: [
+      -0.091, // 2000
+      -0.1189, // 2001
+      -0.221, // 2002
+    ],
+  },
+  greatRecession: {
+    startYear: 2008,
+    endYear: 2009,
+    returns: [
+      -0.37, // 2008
+      0.2646, // 2009
+    ],
+  },
 };
 
 // Funzioni di Calcolo Principali
@@ -301,33 +308,59 @@ export function calcolaProiezione(
     let totaleRendimentoLordo = 0;
     let totaleImpostaRendite = 0;
 
-    if (isMonteCarloRun) {
+    const selectedCrisis = inputs.impostazioni.scenarioCrisi !== 'none' ? crisisScenarios[inputs.impostazioni.scenarioCrisi] : null;
+    let annualReturnRate = 0;
+
+    if (selectedCrisis && anno >= selectedCrisis.startYear && anno <= selectedCrisis.endYear) {
+      const crisisIndex = anno - selectedCrisis.startYear;
+      annualReturnRate = selectedCrisis.returns[crisisIndex];
+      inputs.assetAllocation.forEach(asset => {
+        const rendimentoAsset = capitalePerConto[asset.nome] * annualReturnRate;
+        capitalePerConto[asset.nome] += rendimentoAsset;
+        totaleRendimentoLordo += rendimentoAsset;
+      });
+    } else if (isMonteCarloRun) {
       inputs.assetAllocation.forEach(asset => {
         const rendimentoCasuale = getNormalRandom(asset.rendimento / 100, asset.devStd / 100);
         const rendimentoAsset = capitalePerConto[asset.nome] * rendimentoCasuale;
         capitalePerConto[asset.nome] += rendimentoAsset;
         totaleRendimentoLordo += rendimentoAsset;
       });
-      totaleImpostaRendite = totaleRendimentoLordo * (inputs.impostazioni.tassazioneRendite / 100);
     } else if (historicalReturns) {
       // Logica per backtest con dati storici
       const annoCorrente = anno;
-      const rendimentoAnno = historicalReturns[annoCorrente] || 0; // Assumi 0 se non ci sono dati
+      annualReturnRate = historicalReturns[annoCorrente] || 0; // Assumi 0 se non ci sono dati
       inputs.assetAllocation.forEach(asset => {
-        const rendimentoAsset = capitalePerConto[asset.nome] * rendimentoAnno;
+        const rendimentoAsset = capitalePerConto[asset.nome] * annualReturnRate;
         capitalePerConto[asset.nome] += rendimentoAsset;
         totaleRendimentoLordo += rendimentoAsset;
       });
-      totaleImpostaRendite = totaleRendimentoLordo * (inputs.impostazioni.tassazioneRendite / 100);
     } else {
       // Logica per simulazione deterministica
+      const selectedCrisis = inputs.impostazioni.scenarioCrisi !== 'none' ? crisisScenarios[inputs.impostazioni.scenarioCrisi] : null;
+      let rendimentoEffettivo = 0;
+
+      if (selectedCrisis) {
+        const crisisIndex = anno - simulazioneStartYear;
+        if (crisisIndex >= 0 && crisisIndex < selectedCrisis.returns.length) {
+          rendimentoEffettivo = selectedCrisis.returns[crisisIndex];
+        } else {
+          // Se l'anno è fuori dal periodo di crisi definito, usa il rendimento medio dell'asset allocation
+          rendimentoEffettivo = inputs.assetAllocation.reduce((sum, asset) => sum + (asset.quota / 100) * (asset.rendimento / 100), 0);
+        }
+      } else {
+        // Nessuno scenario di crisi selezionato, usa il rendimento medio dell'asset allocation
+        rendimentoEffettivo = inputs.assetAllocation.reduce((sum, asset) => sum + (asset.quota / 100) * (asset.rendimento / 100), 0);
+      }
+
       inputs.assetAllocation.forEach(asset => {
-        const rendimentoAsset = capitalePerConto[asset.nome] * (asset.rendimento / 100);
+        const rendimentoAsset = capitalePerConto[asset.nome] * rendimentoEffettivo;
         capitalePerConto[asset.nome] += rendimentoAsset;
         totaleRendimentoLordo += rendimentoAsset;
       });
-      totaleImpostaRendite = totaleRendimentoLordo * (inputs.impostazioni.tassazioneRendite / 100);
     }
+
+    totaleImpostaRendite = totaleRendimentoLordo * (inputs.impostazioni.tassazioneRendite / 100);
 
     
 
