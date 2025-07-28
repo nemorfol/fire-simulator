@@ -5,7 +5,7 @@
 </template>
 
 <script setup>
-import { inject, computed, onMounted } from 'vue';
+import { inject, computed } from 'vue';
 
 const props = defineProps({
   title: {
@@ -16,15 +16,9 @@ const props = defineProps({
 
 // Inietta lo stato condiviso dal genitore
 const activeTabTitle = inject('activeTabTitle');
-const addTab = inject('addTab');
 
 // Determina se questo tab è attivo tramite una computed property
 const isActive = computed(() => props.title === activeTabTitle.value);
-
-// Registra questo tab con il genitore al momento del montaggio
-onMounted(() => {
-  addTab({ title: props.title });
-});
 </script>
 
 <style scoped>

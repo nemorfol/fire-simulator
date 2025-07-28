@@ -2,12 +2,12 @@
   <div class="tabs-container">
     <ul class="tabs-header">
       <li
-        v-for="tab in tabs"
-        :key="tab.title"
-        @click="selectTab(tab.title)"
-        :class="{'tab-selected': tab.title === activeTabTitle}"
+        v-for="title in tabs"
+        :key="title"
+        @click="selectTab(title)"
+        :class="{'tab-selected': title === activeTabTitle}"
       >
-        {{ tab.title }}
+        {{ title }}
       </li>
     </ul>
     <slot></slot>
@@ -17,41 +17,34 @@
 <script setup>
 import { ref, provide, onMounted, defineProps, watch, defineExpose } from 'vue';
 
-const tabs = ref([]);
-const activeTabTitle = ref('');
-
 const props = defineProps({
+  tabs: {
+    type: Array,
+    required: true
+  },
   activeTab: String
 });
+
+const activeTabTitle = ref(props.activeTab);
 
 const selectTab = (title) => {
   activeTabTitle.value = title;
 };
 
-// Fornisce il titolo del tab attivo ai componenti figli
 provide('activeTabTitle', activeTabTitle);
-
-// Permette ai componenti figli di registrarsi
-const addTab = (tab) => {
-  tabs.value.push(tab);
-};
-provide('addTab', addTab);
-
-
-onMounted(() => {
-  if (tabs.value.length > 0) {
-    // Imposta il primo tab come attivo all'avvio
-    activeTabTitle.value = tabs.value[0].title;
-  }
-});
 
 watch(() => props.activeTab, (newTab) => {
   if (newTab) {
-    selectTab(newTab);
+    activeTabTitle.value = newTab;
   }
 });
 
-// Esponi la funzione al componente genitore
+watch(() => props.tabs, (newTabs) => {
+  if (newTabs && !newTabs.includes(activeTabTitle.value)) {
+    activeTabTitle.value = newTabs[0];
+  }
+});
+
 defineExpose({
   selectTab
 });

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted, computed, watch } from "vue";
 import SimulationSettings from "./components/SimulationSettings.vue";
 import TaxBrackets from "./components/TaxBrackets.vue";
 import AssetAllocation from "./components/AssetAllocation.vue";
@@ -188,7 +188,7 @@ const formInputs = reactive({
   regolaFIRE: 4,
   tassazioneRendite: 26,
   etaRitiro: 65,
-  numeroSimulazioni: 1000,
+  numeroSimulazioni: 500,
   simMode: "deterministic",
 
   strategiaPrelievo: "regolaFIRE",
@@ -231,8 +231,35 @@ const ultimoRisultato = ref([]);
 const monteCarloSummaryResults = ref(null);
 const monteCarloResults = ref([]); // Nuovo ref per i risultati completi di Monte Carlo
 const chartLabels = ref([]);
-const showDetailedResults = ref(false); // Nuova variabile reattiva
+const showDetailedTabs = ref(false);
 const activeTabName = ref(''); // Variabile per controllare il tab attivo
+
+const visibleTabs = computed(() => {
+  if (formInputs.simMode === 'montecarlo') {
+    return ['Andamento Capitale', 'Monte Carlo'];
+  } else {
+    return [
+      'Panoramica',
+      'Entrate/Uscite',
+      'Patrimonio Netto',
+      'Andamento Capitale',
+      'Flussi di Cassa',
+      'Debiti',
+      'Impatto Fiscale',
+      'Dettaglio Annuale',
+    ];
+  }
+});
+
+// Watch for changes in simMode to reset the active tab
+watch(() => formInputs.simMode, (newMode) => {
+  showResults.value = false;
+  if (newMode === 'montecarlo') {
+    activeTabName.value = 'Monte Carlo';
+  } else {
+    activeTabName.value = 'Panoramica';
+  }
+});
 
 // Computed properties
 const numeroFIRE = computed(() => {
@@ -380,6 +407,24 @@ async function handleAvviaSimulazione() {
     mostraNotifica,
     monteCarloResults // Passa i risultati completi di Monte Carlo
   );
+
+  if (res) { // Assicurati che la simulazione sia stata completata con successo
+    showResults.value = true; // Mostra il pannello dei risultati
+    if (formInputs.simMode === 'montecarlo') {
+      showDetailedTabs.value = false; // Nascondi i tab dettagliati per Monte Carlo
+      activeTabName.value = 'Monte Carlo'; // Imposta il tab Monte Carlo come attivo
+    } else {
+      showDetailedTabs.value = true; // Mostra subito i tab dettagliati per altre modalità
+      activeTabName.value = 'Panoramica'; // Imposta il tab Panoramica come attivo
+    }
+  }
+}
+
+function handleViewDetails() {
+  showDetailedTabs.value = true;
+  if (formInputs.simMode !== 'montecarlo') {
+    activeTabName.value = 'Dettaglio Annuale';
+  }
 }
 
 function handleShowSankey(data) {
@@ -579,10 +624,7 @@ function handleShowSankey(data) {
   );
 }
 
-function handleViewDetails() {
-  console.log("Imposto il tab attivo su Dettaglio Annuale");
-  activeTabName.value = 'Dettaglio Annuale';
-}
+
 
 const handleImportJson = (event) => {
   const file = event.target.files[0];
@@ -784,7 +826,7 @@ onMounted(() => {
       />
       <h2 class="section-title">Risultati della Simulazione</h2>
 
-      <tabs :active-tab="activeTabName">
+      <tabs v-if="showDetailedTabs" :tabs="visibleTabs" :active-tab="activeTabName">
         <tab title="Panoramica">
           <div
             id="scenario-dashboard"
@@ -871,7 +913,6 @@ onMounted(() => {
         </tab>
         <tab
           title="Dettaglio Annuale"
-          v-if="formInputs.simMode !== 'montecarlo'"
         >
           <div id="dettaglio-annuale-card" class="card mt-8">
             <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
@@ -895,7 +936,7 @@ onMounted(() => {
             />
           </div>
         </tab>
-        <tab title="Monte Carlo" v-if="formInputs.simMode === 'montecarlo'">
+        <tab title="Monte Carlo">
           <MonteCarloDashboard
             :simMode="formInputs.simMode"
             :monteCarloSummaryResults="monteCarloSummaryResults"
