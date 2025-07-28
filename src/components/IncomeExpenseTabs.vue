@@ -1,6 +1,6 @@
 <template>
   <div>
-    <tabs>
+    <tabs :tabs="['Entrate', 'Uscite']">
     <tab title="Entrate">
       <IncomeSection
         v-model:entrateRicorrenti="formInputs.entrateRicorrenti"

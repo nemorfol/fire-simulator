@@ -487,7 +487,7 @@ export function mostraRisultatiMonteCarlo(
   };
 
   // Calcolo dei percentili per il grafico del capitale (come già fatto in handleAvviaSimulazione)
-  const capitalResults = rawMonteCarloResults.simulations.map(sim => sim.map(r => r.capitaleFinale));
+  const capitalResults = rawMonteCarloResults.simulations.map(sim => sim ? sim.map(r => r.capitaleFinale) : []);
   const years = rawMonteCarloResults.simulations[0].map(r => r.anno);
   const p25 = [];
   const p50 = [];
