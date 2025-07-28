@@ -1,5 +1,6 @@
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps } from "vue";
+import MonteCarloDistributionChart from "./MonteCarloDistributionChart.vue";
 
 const props = defineProps({
   simMode: {
@@ -7,6 +8,10 @@ const props = defineProps({
     required: true,
   },
   monteCarloSummaryResults: {
+    type: Object,
+    default: null,
+  },
+  monteCarloResults: {
     type: Object,
     default: null,
   },
@@ -22,7 +27,7 @@ const props = defineProps({
     <h3 class="card-title">Risultati Simulazione Monte Carlo</h3>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
       <div>
-        <p class="text-sm text-gray-600">Probabilit di Successo</p>
+        <p class="text-sm text-gray-600">Probabilita di Successo</p>
         <p class="text-2xl font-bold text-blue-700">
           {{ monteCarloSummaryResults.probabilitaSuccesso.toFixed(2) }}%
         </p>
@@ -34,15 +39,22 @@ const props = defineProps({
         </p>
       </div>
       <div v-if="monteCarloSummaryResults.etaMediaEsaurimento">
-        <p class="text-sm text-gray-600">Et Media Esaurimento (Fallite)</p>
+        <p class="text-sm text-gray-600">Eta Media Esaurimento (Fallite)</p>
         <p class="text-2xl font-bold text-red-700">
           {{ monteCarloSummaryResults.etaMediaEsaurimento.toFixed(0) }} anni
         </p>
       </div>
     </div>
+    <MonteCarloDistributionChart :monteCarloResults="monteCarloResults" />
   </div>
 </template>
 
 <style scoped>
+#monte-carlo-dashboard {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centra orizzontalmente i figli */
+  text-align: center; /* Centra il contenuto a blocco */
+}
 /* Stili specifici per MonteCarloDashboard.vue */
 </style>

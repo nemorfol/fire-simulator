@@ -1,15 +1,18 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sankey Chart</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
-      body { font-family: 'Inter', sans-serif; }
+      body { font-family: 'Inter', sans-serif; font-weight: bold; }
       .sankey-link {
         fill: none;
         stroke: #000;
@@ -55,6 +58,49 @@
       });
 
       app.mount('#chart');
+    </script>
+  </body>
+</html>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <script>
+      const SankeyChart = {
+        template: `<div><div ref="plotlyDiv" style="width:1350px;height:750px;"></div></div>`,
+        props: ["data"],
+        mounted() {
+          this.drawSankey();
+        },
+        watch: {
+          data: "drawSankey",
+        },
+        methods: {
+          drawSankey() {
+            if (!this.data || !this.$refs.plotlyDiv) return;
+            const plotlyData = JSON.parse(this.data);
+            Plotly.newPlot(
+              this.$refs.plotlyDiv,
+              plotlyData.data,
+              plotlyData.layout
+            );
+          },
+        },
+      };
+
+      const app = Vue.createApp({
+        components: { SankeyChart },
+        data() {
+          return {
+            sankeyData: null,
+          };
+        },
+        mounted() {
+          this.sankeyData = localStorage.getItem("sankeyData");
+        },
+        template: `<SankeyChart :data="sankeyData" />`,
+      });
+
+      app.mount("#chart");
     </script>
   </body>
 </html>

@@ -30,7 +30,7 @@ function closeModal() {
 <template>
   <div
     id="notificationModal"
-    v-show="!hidden"
+    v-if="!hidden"
     style="
       position: fixed;
       top: 0;

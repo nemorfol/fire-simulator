@@ -11,7 +11,7 @@ import NotificationModal from "./components/NotificationModal.vue";
 import AppLoader from "./components/AppLoader.vue";
 import FireDashboard from "./components/FireDashboard.vue";
 import MonteCarloDashboard from "./components/MonteCarloDashboard.vue";
-import WorstCaseChart from './components/WorstCaseChart.vue';
+import WorstCaseChart from "./components/WorstCaseChart.vue";
 import StressTestDashboard from "./components/StressTestDashboard.vue";
 import SuggestionsCard from "./components/SuggestionsCard.vue";
 import CapitalChart from "./components/CapitalChart.vue";
@@ -20,10 +20,25 @@ import AnnualDetailTable from "./components/AnnualDetailTable.vue";
 import DebtSection from "./components/DebtSection.vue";
 import SummaryDashboard from "./components/SummaryDashboard.vue";
 import JsonDataManagement from "./components/JsonDataManagement.vue";
+import IncomeExpenseChart from "./components/IncomeExpenseChart.vue";
+import NetWorthChart from "./components/NetWorthChart.vue";
+import DebtWaterfallChart from "./components/DebtWaterfallChart.vue"; // Nuovo import
+import TaxImpactChart from "./components/TaxImpactChart.vue"; // Nuovo import
+import IncomeExpenseTabs from "./components/IncomeExpenseTabs.vue"; // Nuovo import
+import Tab from "./components/Tab.vue"; // Nuovo import
+import Tabs from "./components/Tabs.vue"; // Nuovo import
 
 // Import services
 import { leggiInput } from "./services/financialCalculator";
-import { importaJSON, esportaJSON, esportaExcel as exportExcelService, esportaCapitaleExcel as exportCapitalExcelService, esportaFlussiExcel as exportCashFlowExcelService, salvaConfronto as saveComparisonService, resetConfronto as resetComparisonService } from "./services/dataManagementService.js";
+import {
+  importaJSON,
+  esportaJSON,
+  esportaExcel as exportExcelService,
+  esportaCapitaleExcel as exportCapitalExcelService,
+  esportaFlussiExcel as exportCashFlowExcelService,
+  salvaConfronto as saveComparisonService,
+  resetConfronto as resetComparisonService,
+} from "./services/dataManagementService.js";
 import { popolaDatiIniziali as initializeDataService } from "./services/initializationService.js";
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
@@ -175,10 +190,10 @@ const formInputs = reactive({
   etaRitiro: 65,
   numeroSimulazioni: 1000,
   simMode: "deterministic",
-  
+
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
-  scenarioCrisi: 'none', // Nuovo campo per la selezione dello scenario di crisi
+  scenarioCrisi: "none", // Nuovo campo per la selezione dello scenario di crisi
   taxBrackets: reactive([
     { finoA: 28000, aliquota: 23 },
     { finoA: 50000, aliquota: 35 },
@@ -212,10 +227,12 @@ const resetScenarioBtnHidden = ref(true);
 const datasetsCapitale = ref([]);
 const stressTestResult = ref(null);
 const scenarioA = ref(null);
-const ultimoRisultato = ref(null);
+const ultimoRisultato = ref([]);
 const monteCarloSummaryResults = ref(null);
+const monteCarloResults = ref([]); // Nuovo ref per i risultati completi di Monte Carlo
 const chartLabels = ref([]);
 const showDetailedResults = ref(false); // Nuova variabile reattiva
+const activeTabName = ref(''); // Variabile per controllare il tab attivo
 
 // Computed properties
 const numeroFIRE = computed(() => {
@@ -360,10 +377,9 @@ async function handleAvviaSimulazione() {
     loaderHidden,
     showResults,
     saveScenarioBtnDisabled,
-    mostraNotifica
+    mostraNotifica,
+    monteCarloResults // Passa i risultati completi di Monte Carlo
   );
-
-  
 }
 
 function handleShowSankey(data) {
@@ -387,9 +403,9 @@ function handleShowSankey(data) {
   const currentYear = data.anno;
   const inflationRate = formInputs.tassoInflazione / 100;
 
-  // --- Calcolo dei valori dettagliati per l'anno corrente --- 
+  // --- Calcolo dei valori dettagliati per l'anno corrente ---
   const detailedIncomes = {};
-  formInputs.entrateRicorrenti.forEach(item => {
+  formInputs.entrateRicorrenti.forEach((item) => {
     if (currentYear >= item.inizio && currentYear <= item.fine) {
       const yearsPassed = currentYear - item.inizio;
       let value = item.valore * Math.pow(1 + item.incr / 100, yearsPassed);
@@ -399,17 +415,21 @@ function handleShowSankey(data) {
       detailedIncomes[item.desc] = (detailedIncomes[item.desc] || 0) + value;
     }
   });
-  formInputs.entrateLumpSum.forEach(item => {
+  formInputs.entrateLumpSum.forEach((item) => {
     if (currentYear === item.anno) {
-      detailedIncomes[item.desc] = (detailedIncomes[item.desc] || 0) + item.importo;
+      detailedIncomes[item.desc] =
+        (detailedIncomes[item.desc] || 0) + item.importo;
     }
   });
 
   const detailedExpenses = {};
-  formInputs.usciteRicorrenti.forEach(item => {
+  formInputs.usciteRicorrenti.forEach((item) => {
     if (currentYear >= item.inizio && currentYear <= item.fine) {
       const yearsPassed = currentYear - item.inizio;
-      const specificInflation = item.inflazioneSpecifica > 0 ? item.inflazioneSpecifica / 100 : inflationRate;
+      const specificInflation =
+        item.inflazioneSpecifica > 0
+          ? item.inflazioneSpecifica / 100
+          : inflationRate;
       let value = item.valore * Math.pow(1 + item.incr / 100, yearsPassed);
       if (item.isTodayValue) {
         value *= Math.pow(1 + specificInflation, yearsPassed);
@@ -417,16 +437,17 @@ function handleShowSankey(data) {
       detailedExpenses[item.desc] = (detailedExpenses[item.desc] || 0) + value;
     }
   });
-  formInputs.usciteLumpSum.forEach(item => {
+  formInputs.usciteLumpSum.forEach((item) => {
     if (currentYear === item.anno) {
-      detailedExpenses[item.desc] = (detailedExpenses[item.desc] || 0) + item.importo;
+      detailedExpenses[item.desc] =
+        (detailedExpenses[item.desc] || 0) + item.importo;
     }
   });
 
-  // --- Costruzione del grafico Sankey --- 
+  // --- Costruzione del grafico Sankey ---
 
   // Livello 0: Entrate Dettagliate
-  const entrateAggregateNode = getOrAddNodeIndex('Entrate Totali');
+  const entrateAggregateNode = getOrAddNodeIndex("Entrate Totali");
   for (const [desc, value] of Object.entries(detailedIncomes)) {
     if (value > 0) {
       const sourceNode = getOrAddNodeIndex(desc);
@@ -438,9 +459,9 @@ function handleShowSankey(data) {
   }
 
   // Livello 1: Uscite, Tasse, Risparmio
-  const usciteNode = getOrAddNodeIndex('Uscite');
-  const tasseNode = getOrAddNodeIndex('Tasse');
-  const risparmioNode = getOrAddNodeIndex('Risparmio');
+  const usciteNode = getOrAddNodeIndex("Uscite");
+  const tasseNode = getOrAddNodeIndex("Tasse");
+  const risparmioNode = getOrAddNodeIndex("Risparmio");
 
   if (data.totaleUscite > 0) {
     plotlyLinksSource.push(entrateAggregateNode);
@@ -452,13 +473,19 @@ function handleShowSankey(data) {
     plotlyLinksSource.push(entrateAggregateNode);
     plotlyLinksTarget.push(tasseNode);
     plotlyLinksValue.push(data.impostaReddito + data.impostaRendite);
-    plotlyLinksLabel.push(`Entrate -> Tasse: ${(data.impostaReddito + data.impostaRendite).toFixed(2)}`);
+    plotlyLinksLabel.push(
+      `Entrate -> Tasse: ${(data.impostaReddito + data.impostaRendite).toFixed(
+        2
+      )}`
+    );
   }
   if (data.utilePerditaNetto > 0) {
     plotlyLinksSource.push(entrateAggregateNode);
     plotlyLinksTarget.push(risparmioNode);
     plotlyLinksValue.push(data.utilePerditaNetto);
-    plotlyLinksLabel.push(`Entrate -> Risparmio: ${data.utilePerditaNetto.toFixed(2)}`);
+    plotlyLinksLabel.push(
+      `Entrate -> Risparmio: ${data.utilePerditaNetto.toFixed(2)}`
+    );
   }
 
   // Livello 2: Uscite Dettagliate
@@ -474,14 +501,14 @@ function handleShowSankey(data) {
 
   // Livello 2: Tasse Dettagliate
   if (data.impostaReddito > 0) {
-    const impostaRedditoNode = getOrAddNodeIndex('Imposta Reddito');
+    const impostaRedditoNode = getOrAddNodeIndex("Imposta Reddito");
     plotlyLinksSource.push(tasseNode);
     plotlyLinksTarget.push(impostaRedditoNode);
     plotlyLinksValue.push(data.impostaReddito);
     plotlyLinksLabel.push(`Imposta Reddito: ${data.impostaReddito.toFixed(2)}`);
   }
   if (data.impostaRendite > 0) {
-    const impostaRenditeNode = getOrAddNodeIndex('Imposta Rendite');
+    const impostaRenditeNode = getOrAddNodeIndex("Imposta Rendite");
     plotlyLinksSource.push(tasseNode);
     plotlyLinksTarget.push(impostaRenditeNode);
     plotlyLinksValue.push(data.impostaRendite);
@@ -490,56 +517,71 @@ function handleShowSankey(data) {
 
   // Livello 2: Risparmio Dettagliato
   if (data.utilePerditaNetto - data.rendimentoNetto > 0) {
-    const risparmioDaRedditoNode = getOrAddNodeIndex('Risparmio da Reddito');
+    const risparmioDaRedditoNode = getOrAddNodeIndex("Risparmio da Reddito");
     plotlyLinksSource.push(risparmioNode);
     plotlyLinksTarget.push(risparmioDaRedditoNode);
     plotlyLinksValue.push(data.utilePerditaNetto - data.rendimentoNetto);
-    plotlyLinksLabel.push(`Risparmio da Reddito: ${(data.utilePerditaNetto - data.rendimentoNetto).toFixed(2)}`);
+    plotlyLinksLabel.push(
+      `Risparmio da Reddito: ${(
+        data.utilePerditaNetto - data.rendimentoNetto
+      ).toFixed(2)}`
+    );
   }
   if (data.rendimentoNetto > 0) {
-    const risparmioDaRendimentoNode = getOrAddNodeIndex('Risparmio da Rendimento');
+    const risparmioDaRendimentoNode = getOrAddNodeIndex(
+      "Risparmio da Rendimento"
+    );
     plotlyLinksSource.push(risparmioNode);
     plotlyLinksTarget.push(risparmioDaRendimentoNode);
     plotlyLinksValue.push(data.rendimentoNetto);
-    plotlyLinksLabel.push(`Risparmio da Rendimento: ${data.rendimentoNetto.toFixed(2)}`);
+    plotlyLinksLabel.push(
+      `Risparmio da Rendimento: ${data.rendimentoNetto.toFixed(2)}`
+    );
   }
 
   const plotlyFigure = {
-    data: [{
-      type: 'sankey',
-      node: {
-        pad: 15,
-        thickness: 20,
-        line: {
-          color: "black",
-          width: 0.5
+    data: [
+      {
+        type: "sankey",
+        node: {
+          pad: 15,
+          thickness: 20,
+          line: {
+            color: "black",
+            width: 0.5,
+          },
+          label: plotlyNodes,
+          // Puoi personalizzare i colori qui, ad esempio in base alla categoria del nodo
+          // color: plotlyNodes.map(name => { /* logica per assegnare colori */ })
         },
-        label: plotlyNodes,
-        // Puoi personalizzare i colori qui, ad esempio in base alla categoria del nodo
-        // color: plotlyNodes.map(name => { /* logica per assegnare colori */ })
+        link: {
+          source: plotlyLinksSource,
+          target: plotlyLinksTarget,
+          value: plotlyLinksValue,
+          label: plotlyLinksLabel,
+          // Puoi personalizzare i colori dei link qui
+        },
       },
-      link: {
-        source: plotlyLinksSource,
-        target: plotlyLinksTarget,
-        value: plotlyLinksValue,
-        label: plotlyLinksLabel,
-        // Puoi personalizzare i colori dei link qui
-      }
-    }],
+    ],
     layout: {
       title: `Flusso Finanziario Dettagliato per l'Anno ${currentYear}`,
       font: {
-        size: 10
-      }
-    }
+        size: 10,
+      },
+    },
   };
 
-  localStorage.setItem('sankeyData', JSON.stringify(plotlyFigure));
-  window.open('/chart.html', '_blank', 'width=1000,height=700,resizable=yes,scrollbars=yes');
+  localStorage.setItem("sankeyData", JSON.stringify(plotlyFigure));
+  window.open(
+    "/chart.html",
+    "_blank",
+    "width=1000,height=700,resizable=yes,scrollbars=yes"
+  );
 }
 
 function handleViewDetails() {
-  showDetailedResults.value = true;
+  console.log("Imposto il tab attivo su Dettaglio Annuale");
+  activeTabName.value = 'Dettaglio Annuale';
 }
 
 const handleImportJson = (event) => {
@@ -555,22 +597,37 @@ const handleImportJson = (event) => {
       // Mantieni la reattività degli oggetti Vue
       for (const key in formInputs) {
         if (Object.hasOwnProperty.call(formInputs, key)) {
-          if (typeof formInputs[key] === 'object' && formInputs[key] !== null && !Array.isArray(formInputs[key])) {
+          if (
+            typeof formInputs[key] === "object" &&
+            formInputs[key] !== null &&
+            !Array.isArray(formInputs[key])
+          ) {
             // Se è un oggetto reattivo, aggiorna le sue proprietà
             Object.assign(formInputs[key], importedData[key]);
           } else if (Array.isArray(formInputs[key])) {
             // Se è un array reattivo, svuotalo e ripopolalo
-            formInputs[key].splice(0, formInputs[key].length, ...importedData[key]);
+            formInputs[key].splice(
+              0,
+              formInputs[key].length,
+              ...importedData[key]
+            );
           } else {
             // Per le proprietà semplici, assegna direttamente
             formInputs[key] = importedData[key];
           }
         }
       }
-      mostraNotifica("Importazione Completata", "I dati della simulazione sono stati caricati dal file JSON.");
+      mostraNotifica(
+        "Importazione Completata",
+        "I dati della simulazione sono stati caricati dal file JSON."
+      );
     } catch (error) {
       console.error("Errore durante l'importazione JSON:", error);
-      mostraNotifica("Errore", "Impossibile leggere o parsare il file JSON. Assicurati che sia un JSON valido.", true);
+      mostraNotifica(
+        "Errore",
+        "Impossibile leggere o parsare il file JSON. Assicurati che sia un JSON valido.",
+        true
+      );
     }
   };
   reader.onerror = () => {
@@ -584,16 +641,31 @@ const handleExportJson = () => {
 };
 
 function handleSaveScenario() {
-  saveComparisonService(scenarioA, ultimoRisultato, formInputs, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
+  saveComparisonService(
+    scenarioA,
+    ultimoRisultato,
+    formInputs,
+    saveScenarioBtnDisabled,
+    resetScenarioBtnHidden,
+    mostraNotifica
+  );
 }
 
 function handleResetScenario() {
-  resetComparisonService(scenarioA, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica);
+  resetComparisonService(
+    scenarioA,
+    saveScenarioBtnDisabled,
+    resetScenarioBtnHidden,
+    mostraNotifica
+  );
 }
 
 function openGuide() {
-  
-  window.open('/guide.html', '_blank', 'width=800,height=600,resizable=yes,scrollbars=yes');
+  window.open(
+    "/guide.html",
+    "_blank",
+    "width=800,height=600,resizable=yes,scrollbars=yes"
+  );
 }
 
 function handleExportPdf() {
@@ -614,7 +686,13 @@ function handleExportExcel() {
 }
 
 function handleExportCapitalExcel() {
-  exportCapitalExcelService(ultimoRisultato.value, formInputs, monteCarloSummaryResults.value, scenarioA.value, mostraNotifica);
+  exportCapitalExcelService(
+    ultimoRisultato.value,
+    formInputs,
+    monteCarloSummaryResults.value,
+    scenarioA.value,
+    mostraNotifica
+  );
 }
 
 function handleExportCashFlowExcel() {
@@ -642,18 +720,21 @@ onMounted(() => {
       </h1>
       <p class="mt-2 text-lg text-gray-600">
         Analizza, confronta e pianifica il tuo percorso verso l'indipendenza
-        financiaria.
+        finanziaria.
       </p>
-      <button @click="openGuide" class="btn btn-sm btn-info mt-4">Guida Dettagliata</button>
+      <button @click="openGuide" class="btn btn-sm btn-info mt-4">
+        Guida Dettagliata
+      </button>
     </header>
-
-    
 
     <!-- Sezione Parametri -->
     <div id="parameters">
       <h2 class="section-title">Parametri di Simulazione</h2>
-      <JsonDataManagement @import-json="handleImportJson" @export-json="handleExportJson" />
-      
+      <JsonDataManagement
+        @import-json="handleImportJson"
+        @export-json="handleExportJson"
+      />
+
       <SimulationSettings v-model="formInputs" />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
       <AssetAllocation v-model="formInputs.assetAllocation" />
@@ -669,18 +750,12 @@ onMounted(() => {
         @save-scenario="handleSaveScenario"
         @reset-scenario="handleResetScenario"
       />
-      <IncomeSection
-        v-model:entrateRicorrenti="formInputs.entrateRicorrenti"
-        v-model:entrateLumpSum="formInputs.entrateLumpSum"
-        @add-riga="aggiungiRiga"
-        @remove-riga="rimuoviRiga"
-        @update-goal-seek-options="updateGoalSeekOptions"
-        @toggle-aliquota-sost="toggleAliquotaSost"
-      />
-      <ExpenseSection
-        v-model:usciteRicorrenti="formInputs.usciteRicorrenti"
-        v-model:usciteLumpSum="formInputs.usciteLumpSum"
-        @expenses-updated="updateGoalSeekOptions"
+      <IncomeExpenseTabs
+        :formInputs="formInputs"
+        :aggiungiRiga="aggiungiRiga"
+        :rimuoviRiga="rimuoviRiga"
+        :updateGoalSeekOptions="updateGoalSeekOptions"
+        :toggleAliquotaSost="toggleAliquotaSost"
       />
     </div>
 
@@ -693,7 +768,10 @@ onMounted(() => {
       </button>
     </div>
 
-    <div id="results" v-show="showResults">
+    <div
+      id="results"
+      v-show="showResults"
+    >
       <SummaryDashboard
         v-if="formInputs.simMode === 'montecarlo' && monteCarloSummaryResults"
         :simMode="formInputs.simMode"
@@ -705,31 +783,40 @@ onMounted(() => {
         @view-details="handleViewDetails"
       />
       <h2 class="section-title">Risultati della Simulazione</h2>
-      <div
-        id="scenario-dashboard"
-        class="hidden card bg-pink-50 border-2 border-pink-200"
-      ></div>
-      <FireDashboard
-        :simMode="formInputs.simMode"
-        :numeroFIRE="numeroFIRE"
-        :datiFIRE="datiFIRE"
-        :formatterValuta="formatterValuta"
-        @view-details="handleViewDetails"
-      />
-      <MonteCarloDashboard
-        :simMode="formInputs.simMode"
-        :monteCarloSummaryResults="monteCarloSummaryResults"
-      />
-      <div class="card mt-8" v-if="formInputs.simMode === 'montecarlo'">
-        <WorstCaseChart :worst-case-scenario="monteCarloSummaryResults?.worstCase?.datiSimulazione" />
-      </div>
-      <StressTestDashboard
-        :stressTestResult="stressTestResult"
-        :formatterValuta="formatterValuta"
-      />
-      <SuggestionsCard :suggestions="suggestions" />
-      <div v-show="showDetailedResults"> <!-- Contenitore per i risultati dettagliati -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+      <tabs :active-tab="activeTabName">
+        <tab title="Panoramica">
+          <div
+            id="scenario-dashboard"
+            class="hidden card bg-pink-50 border-2 border-pink-200"
+          ></div>
+          <FireDashboard
+            :simMode="formInputs.simMode"
+            :numeroFIRE="numeroFIRE"
+            :datiFIRE="datiFIRE"
+            :formatterValuta="formatterValuta"
+            @view-details="handleViewDetails"
+          />
+          <StressTestDashboard
+            :stressTestResult="stressTestResult"
+            :formatterValuta="formatterValuta"
+          />
+          <SuggestionsCard :suggestions="suggestions" />
+        </tab>
+        <tab title="Entrate/Uscite">
+          <IncomeExpenseChart
+            :simulationResults="ultimoRisultato"
+            :incomeCategories="formInputs.entrateRicorrenti.map((e) => e.desc)"
+            :expenseCategories="formInputs.usciteRicorrenti.map((u) => u.desc)"
+          />
+        </tab>
+        <tab title="Patrimonio Netto">
+          <NetWorthChart
+            :simulationResults="ultimoRisultato"
+            :debts="formInputs.debiti"
+          />
+        </tab>
+        <tab title="Andamento Capitale">
           <div class="card">
             <div class="flex justify-between items-center mb-4">
               <h3 class="card-title mb-0">Andamento del Capitale nel Tempo</h3>
@@ -744,14 +831,22 @@ onMounted(() => {
               <CapitalChart
                 :labels="
                   formInputs.simMode === 'montecarlo'
-                    ? (ultimoRisultato && ultimoRisultato.length > 0 && Array.isArray(ultimoRisultato[0]) ? ultimoRisultato[0].map((r) => r.anno) : [])
-                    : (ultimoRisultato ? ultimoRisultato.map((r) => r.anno) : [])
+                    ? ultimoRisultato &&
+                      ultimoRisultato.length > 0 &&
+                      Array.isArray(ultimoRisultato[0])
+                      ? ultimoRisultato[0].map((r) => r.anno)
+                      : []
+                    : ultimoRisultato
+                    ? ultimoRisultato.map((r) => r.anno)
+                    : []
                 "
                 :datasets="datasetsCapitale"
               />
             </div>
           </div>
-          <div id="details-charts-card" class="card" v-if="formInputs.simMode !== 'montecarlo'">
+        </tab>
+        <tab title="Flussi di Cassa">
+          <div id="details-charts-card" class="card">
             <div class="flex justify-between items-center mb-4">
               <h3 class="card-title mb-0">
                 Andamento Flussi di Cassa (Scenario Corrente)
@@ -767,16 +862,29 @@ onMounted(() => {
               <CashFlowChart :risultati="ultimoRisultato" />
             </div>
           </div>
-        </div>
-        <div id="dettaglio-annuale-card" class="card mt-8" v-if="formInputs.simMode !== 'montecarlo'">
-          <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
-          <button @click="handleExportExcel()" class="btn btn-secondary mb-4">
-            Esporta in Excel
-          </button>
-          <button @click="handleExportPdf()" class="btn btn-secondary mb-4 ml-2">
-            Esporta in PDF
-          </button>
-          <AnnualDetailTable
+        </tab>
+        <tab title="Debiti">
+          <DebtWaterfallChart :simulationResults="ultimoRisultato" />
+        </tab>
+        <tab title="Impatto Fiscale">
+          <TaxImpactChart :simulationResults="ultimoRisultato" />
+        </tab>
+        <tab
+          title="Dettaglio Annuale"
+          v-if="formInputs.simMode !== 'montecarlo'"
+        >
+          <div id="dettaglio-annuale-card" class="card mt-8">
+            <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
+            <button @click="handleExportExcel()" class="btn btn-secondary mb-4">
+              Esporta in Excel
+            </button>
+            <button
+              @click="handleExportPdf()"
+              class="btn btn-secondary mb-4 ml-2"
+            >
+              Esporta in PDF
+            </button>
+            <AnnualDetailTable
               :risultatiHeader="risultatiHeader"
               :risultatiBody="risultatiBody"
               :datiFIRE="datiFIRE"
@@ -786,19 +894,34 @@ onMounted(() => {
               @show-sankey="handleShowSankey"
             />
           </div>
-        </div>
+        </tab>
+        <tab title="Monte Carlo" v-if="formInputs.simMode === 'montecarlo'">
+          <MonteCarloDashboard
+            :simMode="formInputs.simMode"
+            :monteCarloSummaryResults="monteCarloSummaryResults"
+            :monteCarloResults="monteCarloResults"
+          />
+          <div class="card mt-8">
+            <WorstCaseChart
+              :worst-case-scenario="
+                monteCarloSummaryResults?.worstCase?.datiSimulazione
+              "
+            />
+          </div>
+        </tab>
+      </tabs>
     </div>
 
-  <NotificationModal
-    :hidden="notificationModalHidden"
-    :title="notificationTitle"
-    :body="notificationBody"
-    :isError="notificationIsError"
-    @close="chiudiNotifica()"
-  />
+    <NotificationModal
+      :hidden="notificationModalHidden"
+      :title="notificationTitle"
+      :body="notificationBody"
+      :isError="notificationIsError"
+      @close="chiudiNotifica()"
+    />
 
-  <AppLoader :hidden="loaderHidden" />
-</div>
+    <AppLoader :hidden="loaderHidden" />
+  </div>
 </template>
 
 <style></style>

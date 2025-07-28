@@ -10,7 +10,7 @@ const props = defineProps({
 </script>
 
 <template>
-  <div id="loader" class="loader-overlay" v-show="!hidden">
+  <div id="loader" class="loader-overlay" v-if="!hidden">
     <div class="loader"></div>
   </div>
 </template>

@@ -463,30 +463,32 @@ export function mostraRisultatiDeterministici(
 }
 
 export function mostraRisultatiMonteCarlo(
-  monteCarloResults,
+  rawMonteCarloResults, // Rinominato per chiarezza
   inputs,
   ultimoRisultatoRef,
-  stressTestResultRef, // Non usato direttamente qui, ma mantenuto per coerenza con la firma
+  stressTestResultRef,
   monteCarloSummaryResultsRef,
-  scenarioARef, // Non usato direttamente qui, ma mantenuto per coerenza con la firma
-  datasetsCapitaleRef
+  scenarioARef,
+  datasetsCapitaleRef,
+  monteCarloResultsRef
 ) {
-  ultimoRisultatoRef.value = monteCarloResults.simulations; // Tutte le simulazioni
+  monteCarloResultsRef.value = rawMonteCarloResults; // Assegna i risultati completi al ref
+  ultimoRisultatoRef.value = rawMonteCarloResults.simulations; // Tutte le simulazioni
 
-  const probabilitaSuccesso = monteCarloResults.numeroSimulazioni > 0 ? (
-    Math.round(((monteCarloResults.numeroSimulazioni - monteCarloResults.numeroSimulazioniFallite) /
-    monteCarloResults.numeroSimulazioni) * 10000) / 100
+  const probabilitaSuccesso = rawMonteCarloResults.numeroSimulazioni > 0 ? (
+    Math.round(((rawMonteCarloResults.numeroSimulazioni - rawMonteCarloResults.numeroSimulazioniFallite) /
+    rawMonteCarloResults.numeroSimulazioni) * 10000) / 100
   ) : 0;
 
   monteCarloSummaryResultsRef.value = {
     probabilitaSuccesso: probabilitaSuccesso,
-    etaMediaEsaurimento: monteCarloResults.etaMediaEsaurimento,
-    worstCase: monteCarloResults.worstCase, // Passa i dati dello scenario peggiore
+    etaMediaEsaurimento: rawMonteCarloResults.etaMediaEsaurimento,
+    worstCase: rawMonteCarloResults.worstCase, // Passa i dati dello scenario peggiore
   };
 
   // Calcolo dei percentili per il grafico del capitale (come già fatto in handleAvviaSimulazione)
-  const capitalResults = monteCarloResults.simulations.map(sim => sim.map(r => r.capitaleFinale));
-  const years = monteCarloResults.simulations[0].map(r => r.anno);
+  const capitalResults = rawMonteCarloResults.simulations.map(sim => sim.map(r => r.capitaleFinale));
+  const years = rawMonteCarloResults.simulations[0].map(r => r.anno);
   const p25 = [];
   const p50 = [];
   const p75 = [];
@@ -582,7 +584,8 @@ export async function avviaSimulazione(
   loaderHiddenRef,
   showResultsRef,
   saveScenarioBtnDisabledRef,
-  mostraNotifica
+  mostraNotifica,
+  monteCarloResultsRef // Nuovo parametro
 ) {
   loaderHiddenRef.value = false;
   await new Promise((resolve) => setTimeout(resolve, 50));
@@ -636,13 +639,14 @@ export async function avviaSimulazione(
         annoFineSimulazione
       );
       mostraRisultatiMonteCarlo(
-        monteCarloResults,
+        monteCarloResults, // Passa i risultati completi
         inputs,
         ultimoRisultatoRef,
         stressTestResultRef,
         monteCarloSummaryResultsRef,
         scenarioARef,
-        datasetsCapitaleRef
+        datasetsCapitaleRef,
+        monteCarloResultsRef
       );
       results = monteCarloResults.simulations;
       break;
