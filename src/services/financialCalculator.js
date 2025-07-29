@@ -9,6 +9,7 @@ export function leggiInput(formInputs) {
       etaRitiro: parseInt(formInputs.etaRitiro),
       numeroSimulazioni: parseInt(formInputs.numeroSimulazioni),
       simMode: formInputs.simMode,
+      etaMassimaSimulazione: parseInt(formInputs.etaMassimaSimulazione), // Aggiunto
       
       strategiaPrelievo: formInputs.strategiaPrelievo,
       percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,

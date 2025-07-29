@@ -679,8 +679,18 @@ export async function avviaSimulazione(
   // Calcola l'anno massimo basato sull'età di ritiro + un'aspettativa di vita ragionevole
   // o l'età massima dell'utente se specificata altrove.
   // Per ora, userò un'età massima di 100 anni come default se non ci sono altri anni coinvolti.
-  const annoMassimoVita = formInputs.etaIniziale + (100 - formInputs.etaIniziale); // Assumiamo 100 anni come età massima di simulazione
-  const annoFineSimulazione = Math.max(...anniCoinvolti, annoMassimoVita);
+  let annoFineSimulazione;
+  if (inputs.impostazioni.etaMassimaSimulazione && !isNaN(inputs.impostazioni.etaMassimaSimulazione) && inputs.impostazioni.etaMassimaSimulazione > 0) {
+    const annoNascita = new Date().getFullYear() - inputs.impostazioni.etaIniziale;
+    annoFineSimulazione = annoNascita + inputs.impostazioni.etaMassimaSimulazione;
+  } else {
+    if (anniCoinvolti.length > 0) {
+      annoFineSimulazione = Math.max(...anniCoinvolti);
+    } else {
+      const annoNascita = new Date().getFullYear() - inputs.impostazioni.etaIniziale;
+      annoFineSimulazione = annoNascita + 95; // Default to 95 years old
+    }
+  }
 
   let results;
   switch (inputs.impostazioni.simMode) {

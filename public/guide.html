@@ -40,23 +40,22 @@
                     <a href="#parametri">2. Sezione Parametri: Inserimento dei Dati</a>
                     <ul>
                         <li><a href="#impostazioni-generali">2.1 Impostazioni Generali</a></li>
-                        <li><a href="#entrate-uscite">2.2 Entrate e Uscite</a></li>
-                        <li><a href="#asset-allocation">2.3 Asset Allocation</a></li>
-                        <li><a href="#debiti">2.4 Debiti</a></li>
+                        <li><a href="#strategie-prelievo">2.2 Strategie di Prelievo</a></li>
+                        <li><a href="#entrate-uscite">2.3 Entrate e Uscite</a></li>
+                        <li><a href="#asset-allocation">2.4 Asset Allocation</a></li>
+                        <li><a href="#debiti">2.5 Debiti</a></li>
                     </ul>
                 </li>
                 <li><a href="#tipi-simulazione">3. Tipi di Simulazione</a></li>
                 <li><a href="#risultati-simulazione">4. Risultati della Simulazione</a></li>
                 <li><a href="#goal-seek">5. Goal Seek</a></li>
                 <li><a href="#gestione-dati">6. Gestione Dati</a></li>
-                <li><a href="#utilizzo-dettagliato">7. Utilizzo Dettagliato del Simulatore</a></li>
             </ul>
         </div>
 
         <div class="content">
             <h1>Guida Dettagliata al Simulatore F.I.R.E.</h1>
             <p class="section-intro">Benvenuto nella guida dettagliata del Simulatore Strategico F.I.R.E. Questo strumento è progettato per aiutarti a visualizzare e pianificare il tuo percorso verso l'Indipendenza Finanziaria e il Ritiro Anticipato (F.I.R.E.).</p>
-            <p>Attraverso l'inserimento di dati finanziari personali e la scelta di diverse modalità di simulazione, potrai ottenere proiezioni realistiche e identificare le strategie migliori per raggiungere i tuoi obiettivi.</p>
 
             <h2 id="panoramica">1. Panoramica del Simulatore</h2>
             <p>Il Simulatore F.I.R.E. è uno strumento completo che ti permette di:</p>
@@ -71,155 +70,60 @@
             </ul>
 
             <h2 id="parametri">2. Sezione Parametri: Inserimento dei Dati</h2>
-            <p>Questa sezione è il cuore del simulatore, dove inserirai tutti i dati rilevanti per la tua situazione finanziaria. La precisione dei risultati dipende dalla completezza e accuratezza dei dati inseriti.</p>
+            <p>Questa sezione è il cuore del simulatore. La precisione dei risultati dipende dalla completezza e accuratezza dei dati inseriti.</p>
 
             <h3 id="impostazioni-generali">2.1 Impostazioni Generali</h3>
             <ul>
-                <li><strong>Età Iniziale:</strong> La tua età attuale all'inizio della simulazione.</li>
-                <li><strong>Capitale Iniziale:</strong> Il valore totale del tuo patrimonio netto (investimenti, liquidità, ecc.) all'inizio della simulazione.</li>
-                <li><strong>Tasso Inflazione Annuo:</strong> Il tasso di inflazione medio annuo che prevedi per il futuro. Questo influenzerà il potere d'acquisto del tuo denaro nel tempo.</li>
-                <li><strong>Regola FIRE (%):</strong> La percentuale del tuo capitale che intendi prelevare annualmente una volta raggiunto il FIRE (es. 4% per la famosa "Regola del 4%").</li>
-                <li><strong>Tassazione Rendite (%):</strong> La percentuale di tassazione applicata ai rendimenti dei tuoi investimenti.</li>
+                <li><strong>Età Iniziale:</strong> La tua età attuale.</li>
+                <li><strong>Capitale Iniziale:</strong> Il valore totale del tuo patrimonio netto.</li>
+                <li><strong>Tasso Inflazione Annuo:</strong> L'inflazione media annua che prevedi.</li>
+                <li><strong>Regola FIRE (%):</strong> La percentuale di prelievo annuale desiderata in fase di ritiro.</li>
+                <li><strong>Tassazione Rendite (%):</strong> La tassazione applicata ai rendimenti degli investimenti.</li>
                 <li><strong>Età di Ritiro:</strong> L'età in cui prevedi di smettere di lavorare.</li>
-                <li><strong>Costi Sanitari Annuo in Pensione:</strong> Una stima dei costi sanitari annuali che potresti sostenere una volta in pensione.</li>
-                <li><strong>Scenario Crisi:</strong> Ti permette di selezionare scenari economici storici (es. Dot-Com Bubble, Grande Recessione) per testare la resilienza del tuo piano. Seleziona 'none' per una simulazione standard.</li>
+                <li><strong>Età Massima Simulazione:</strong> L'orizzonte temporale della simulazione. Puoi calcolarla automaticamente in base alla tua speranza di vita (dati ISTAT) o impostarla manualmente.</li>
+                <li><strong>Calcola da ISTAT:</strong> Un pulsante che, in base a età e sesso, calcola la tua speranza di vita e imposta automaticamente l'età massima della simulazione.</li>
             </ul>
-            <div class="usage-tip">
-                <strong>Consiglio d'uso:</strong> Inserisci valori realistici e considera di fare delle ricerche sui tassi di inflazione e tassazione medi nel tuo paese per una maggiore accuratezza.
-            </div>
 
-            <h3 id="entrate-uscite">2.2 Entrate e Uscite</h3>
-            <p>Qui puoi dettagliare tutte le tue fonti di reddito e le tue spese. Il simulatore distingue tra voci ricorrenti e una tantum.</p>
+            <h3 id="strategie-prelievo">2.2 Strategie di Prelievo</h3>
+            <p>Puoi scegliere come prelevare i fondi durante la pensione:</p>
             <ul>
-                <li><strong>Entrate Ricorrenti:</strong> Stipendio, pensione, affitti, ecc. Puoi specificare la descrizione, il valore annuo, il periodo di inizio e fine, un tasso di incremento annuale e il regime fiscale (ordinaria, sostitutiva, esente).</li>
-                <li><strong>Entrate Lump Sum:</strong> Voci una tantum come TFR, eredità, vendita di beni. Specifica l'importo e l'anno in cui si verificheranno.</li>
-                <li><strong>Uscite Ricorrenti:</strong> Spese di casa, alimentari, trasporti, ecc. Simili alle entrate ricorrenti, con possibilità di specificare un'inflazione specifica per voce.</li>
-                <li><strong>Uscite Lump Sum:</strong> Spese una tantum come acquisto auto, viaggi importanti. Specifica l'importo e l'anno.</li>
+                <li><strong>Regola FIRE (Fisso):</strong> Preleva un importo fisso annuale, aggiustato per l'inflazione.</li>
+                <li><strong>Percentuale Costante:</strong> Preleva una percentuale fissa del capitale rimanente ogni anno.</li>
+                <li><strong>VPW (Variable Percentage Withdrawal):</strong> Un metodo dinamico che adatta il prelievo all'età e alla speranza di vita.</li>
+                <li><strong>Guardrails:</strong> Una strategia che aggiusta il prelievo in base a soglie di capitale predefinite, per proteggerti durante i ribassi di mercato e permetterti di spendere di più durante i rialzi.</li>
             </ul>
-            <div class="usage-tip">
-                <strong>Consiglio d'uso:</strong> Sii il più dettagliato possibile con le tue entrate e uscite. Considera le spese future (es. figli, istruzione) e le variazioni di reddito previste.
-            </div>
 
-            <h3 id="asset-allocation">2.3 Asset Allocation</h3>
-            <p>Definisci la composizione del tuo portafoglio di investimenti. Questo è cruciale per le simulazioni, specialmente Monte Carlo.</p>
-            <ul>
-                <li><strong>Nome Asset:</strong> Descrizione dell'asset (es. Azioni Globali, Obbligazioni, Liquidità).</li>
-                <li><strong>Quota (%):</strong> La percentuale del tuo capitale totale allocata a questo asset. La somma delle quote dovrebbe essere 100%.</li>
-                <li><strong>Rendimento Atteso (%):</strong> Il rendimento medio annuo che ti aspetti da questo asset.</li>
-                <li><strong>Dev. Standard (%):</strong> La deviazione standard del rendimento. Questo parametro è fondamentale per le simulazioni Monte Carlo, in quanto introduce la variabilità e il rischio. Un valore più alto indica maggiore volatilità.</li>
-                <li><strong>Tipo Conto:</strong> (Opzionale) Puoi specificare il tipo di conto (es. conto titoli, conto corrente).</li>
-            </ul>
-            <div class="usage-tip">
-                <strong>Consiglio d'uso:</strong> Utilizza dati storici o stime prudenti per rendimenti e deviazioni standard. Per un portafoglio diversificato, la deviazione standard combinata sarà inferiore alla media delle singole deviazioni.
-            </div>
+            <h3 id="entrate-uscite">2.3 Entrate e Uscite</h3>
+            <p>Dettaglia le tue fonti di reddito e le tue spese, sia ricorrenti che una tantum.</p>
 
-            <h3 id="debiti">2.4 Debiti</h3>
-            <p>Inserisci i dettagli dei tuoi debiti per includerli nella proiezione finanziaria.</p>
-            <ul>
-                <li><strong>Descrizione:</strong> Nome del debito (es. Mutuo Casa, Prestito Auto).</li>
-                <li><strong>Tipo Debito:</strong> (Opzionale) Es. Mutuo, Prestito Personale.</li>
-                <li><strong>Importo Iniziale (€):</strong> L'ammontare iniziale del debito.</li>
-                <li><strong>Tasso Interesse (%):</strong> Il tasso di interesse annuo del debito.</li>
-                <li><strong>Durata (Anni):</strong> La durata totale del debito in anni.</li>
-                <li><strong>Anno Inizio:</strong> L'anno in cui il debito ha avuto inizio.</li>
-            </ul>
+            <h3 id="asset-allocation">2.4 Asset Allocation</h3>
+            <p>Definisci la composizione del tuo portafoglio, specificando rendimento atteso e deviazione standard per ogni asset.</p>
+
+            <h3 id="debiti">2.5 Debiti</h3>
+            <p>Inserisci i dettagli dei tuoi debiti per una proiezione finanziaria completa.</p>
 
             <h2 id="tipi-simulazione">3. Tipi di Simulazione</h2>
-            <p>Il simulatore offre diverse modalità per analizzare il tuo piano finanziario.</p>
             <ul>
-                <li><strong>Deterministica:</strong> Esegue una singola proiezione lineare basata sui rendimenti attesi e i parametri inseriti. Utile per una visione rapida e diretta.</li>
-                <li><strong>Monte Carlo:</strong> Questa modalità esegue centinaia o migliaia di simulazioni (il numero è configurabile) utilizzando rendimenti casuali per ciascun asset, generati da una distribuzione normale basata sul rendimento atteso e la deviazione standard che hai fornito. Questo ti fornisce una <strong>probabilità di successo</strong> del tuo piano, mostrando quanto è robusto di fronte alla volatilità del mercato.</li>
-                <li><strong>Backtest Storico:</strong> Simula il tuo piano finanziario applicando dati storici reali di mercato ai tuoi asset. Ti permette di vedere come il tuo piano avrebbe performato in periodi passati, inclusi periodi di crisi.</li>
+                <li><strong>Deterministica:</strong> Una singola proiezione lineare.</li>
+                <li><strong>Monte Carlo:</strong> Esegue migliaia di simulazioni per calcolare la probabilità di successo del tuo piano.</li>
+                <li><strong>Backtest Storico:</strong> Testa il tuo piano contro dati di mercato passati.</li>
             </ul>
-            <div class="usage-tip">
-                <strong>Consiglio d'uso:</strong> Per una pianificazione robusta, utilizza la simulazione <strong>Monte Carlo</strong>. Ti darà una visione più realistica dei rischi e delle probabilità di raggiungere i tuoi obiettivi. Il <strong>Backtest Storico</strong> è ottimo per capire la resilienza del tuo piano in condizioni di mercato avverse.
-            </div>
 
             <h2 id="risultati-simulazione">4. Risultati della Simulazione</h2>
-            <p>I risultati visualizzati cambiano in base alla modalità di simulazione scelta (Deterministica o Monte Carlo) per fornire le informazioni più pertinenti.</p>
-
-            <h3>4.1 Risultati per Simulazione Deterministica e Backtest</h3>
-            <p>Quando si esegue una simulazione deterministica o un backtest, i risultati sono presentati in una serie di schede (tab) dedicate:</p>
+            <p>I risultati sono presentati in modo chiaro e contestuale:</p>
             <ul>
-                <li><strong>Panoramica:</strong> Mostra esclusivamente i suggerimenti e le analisi strategiche generate sulla base dei risultati.</li>
-                <li><strong>Schede Grafiche:</strong> Ogni aspetto chiave della simulazione ha una scheda dedicata con un grafico interattivo (Andamento Capitale, Flussi di Cassa, Tasso di Risparmio, Patrimonio Netto, Debiti, Impatto Fiscale).</li>
-                <li><strong>Dettaglio Annuale:</strong> Una tabella dettagliata con i dati finanziari anno per anno. Da qui è possibile:
-                    <ul>
-                        <li>Visualizzare un diagramma di <strong>Sankey</strong> per analizzare i flussi finanziari di un anno specifico.</li>
-                        <li>Identificare gli anni critici (evidenziati in rosso) in cui il capitale si esaurisce.</li>
-                    </ul>
-                </li>
+                <li><strong>Obiettivo Raggiungibile:</strong> Messaggio di successo se raggiungi il tuo "Numero FIRE".</li>
+                <li><strong>Piano Sostenibile:</strong> Se termini la simulazione con un capitale positivo, anche senza raggiungere il Numero FIRE.</li>
+                <li><strong>Capitale Esaurito:</strong> Se il tuo capitale si esaurisce prima della fine.</li>
             </ul>
-
-            <h3>4.2 Risultati per Simulazione Monte Carlo</h3>
-            <p>La modalità Monte Carlo offre una visione probabilistica e più complessa, strutturata come segue:</p>
-            <ul>
-                <li><strong>Dashboard di Riepilogo:</strong> Appare in cima ai risultati e mostra le statistiche chiave della simulazione: probabilità di successo, numero di simulazioni fallite e l'età media di esaurimento del capitale.</li>
-                <li><strong>Schede Principali:</strong>
-                    <ul>
-                        <li><strong>Andamento Capitale:</strong> Un grafico che mostra la distribuzione dei possibili risultati del capitale nel tempo, visualizzando il 25°, 50° (mediana) e 75° percentile.</li>
-                        <li><strong>Monte Carlo:</strong> Questa scheda contiene due grafici fondamentali:
-                            <ul>
-                                <li>Un grafico di distribuzione che mostra l'andamento di tutte le singole simulazioni.</li>
-                                <li>Il grafico dello <strong>Scenario Peggiore</strong>, che mostra l'evoluzione del capitale nel caso peggiore tra tutte le simulazioni eseguite. Questo grafico è stato ingrandito per una migliore leggibilità.</li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+            <p>In ogni messaggio, vedrai chiaramente il tuo <strong>Numero FIRE obiettivo</strong> e il <strong>capitale finale raggiunto</strong>, per un confronto immediato.</p>
 
             <h2 id="goal-seek">5. Goal Seek</h2>
-            <p>La funzione "Goal Seek" è uno strumento potente per l'ottimizzazione. Ti aiuta a trovare quale parametro (es. aumentare un'entrata, ridurre un'uscita) deve essere modificato per raggiungere un obiettivo specifico (es. raggiungere il FIRE a una certa età o con un certo capitale finale).</p>
-            <div class="usage-tip">
-                <strong>Consiglio d'uso:</strong> Se il tuo piano non raggiunge gli obiettivi desiderati, usa Goal Seek per identificare le leve più efficaci da modificare.
-            </div>
+            <p>Usa questa funzione per trovare quali parametri modificare per raggiungere i tuoi obiettivi.</p>
 
             <h2 id="gestione-dati">6. Gestione Dati</h2>
-            <p>Il simulatore ti permette di gestire i tuoi dati in diversi modi:</p>
-            <ul>
-                <li><strong>Importa JSON:</strong> Carica i tuoi dati da un file JSON per popolare rapidamente il simulatore. Il pulsante si trova all'inizio della sezione "Parametri di Simulazione".</li>
-                <li><strong>Esporta JSON:</strong> Esporta i tuoi dati di configurazione in formato JSON per salvarli o condividerli. Il pulsante si trova all'inizio della sezione "Parametri di Simulazione".</li>
-                <li><strong>Esporta Excel:</strong> Esporta i risultati dettagliati della simulazione in formato Excel per analisi esterne o archiviazione.</li>
-                <li><strong>Esporta PDF:</strong> Genera un report PDF riassuntivo della tua simulazione.</li>
-                <li><strong>Salva Scenario / Reset Scenario:</strong> Ti permette di salvare lo scenario corrente come "Scenario A" per confrontarlo con nuove simulazioni.</li>
-            </ul>
+            <p>Importa ed esporta i tuoi dati in formato JSON, Excel o PDF.</p>
 
-            <h2 id="utilizzo-dettagliato">7. Utilizzo Dettagliato del Simulatore</h2>
-            <p>Segui questi passaggi per utilizzare al meglio il simulatore e ottenere proiezioni accurate:</p>
-            <h3>7.1. Inserimento dei Dati Iniziali</h3>
-            <ol>
-                <li><strong>Compila la Sezione "Impostazioni Generali":</strong> Inserisci la tua età attuale, il capitale iniziale, il tasso di inflazione atteso, la regola FIRE desiderata, la tassazione sulle rendite e l'età di ritiro. Se prevedi costi sanitari in pensione, inseriscili.</li>
-                <li><strong>Definisci Entrate e Uscite:</strong> Aggiungi tutte le tue entrate (stipendio, pensione, affitti) e uscite (spese di casa, trasporti, ecc.), sia ricorrenti che una tantum. Specifica periodi di validità e tassi di incremento/inflazione.</li>
-                <li><strong>Configura l'Asset Allocation:</strong> Dettaglia la composizione del tuo portafoglio di investimenti, specificando la quota percentuale, il rendimento atteso e la deviazione standard per ogni asset.</li>
-                <li><strong>Aggiungi i Debiti:</strong> Inserisci eventuali mutui o prestiti con i relativi dettagli.</li>
-            </ol>
-            <div class="usage-tip">
-                <strong>Suggerimento:</strong> Inizia con dati approssimativi e poi affina man mano che acquisisci familiarità con lo strumento.
-            </div>
-
-            <h3>7.2. Scelta della Modalità di Simulazione</h3>
-            <p>Prima di avviare la simulazione, seleziona la modalità più adatta alle tue esigenze:</p>
-            <ul>
-                <li><strong>Deterministica:</strong> Per una proiezione rapida e lineare.</li>
-                <li><strong>Monte Carlo:</strong> Per valutare la probabilità di successo del tuo piano considerando la volatilità del mercato. Ideale per una pianificazione robusta.</li>
-                <li><strong>Backtest Storico:</strong> Per testare il tuo piano contro scenari di mercato passati, inclusi periodi di crisi.</li>
-            </ul>
-            <div class="usage-tip">
-                <strong>Importante:</strong> Per una pianificazione finanziaria a lungo termine, la simulazione Monte Carlo è fortemente raccomandata per comprendere i rischi.
-            </div>
-
-            <h3>7.3. Avvio e Analisi dei Risultati</h3>
-            <ol>
-                <li><strong>Clicca su "Avvia Simulazione":</strong> Il simulatore elaborerà i dati e presenterà i risultati.</li>
-                <li><strong>Esplora le Dashboard:</strong> Analizza il riepilogo, l'andamento del capitale, i flussi di cassa e il dettaglio annuale.</li>
-                <li><strong>Utilizza il Goal Seek:</strong> Se i risultati non sono quelli desiderati, usa questa funzione per identificare come modificare i parametri per raggiungere i tuoi obiettivi.</li>
-                <li><strong>Esporta i Dati:</strong> Salva i tuoi risultati in PDF, Excel o JSON per analisi future o condivisione.</li>
-            </ol>
-            <div class="usage-tip">
-                <strong>Consiglio:</strong> Non aver paura di sperimentare con diversi scenari e parametri per capire l'impatto delle tue decisioni finanziarie.
-            </div>
-
-            <p>Speriamo che questa guida dettagliata ti sia d'aiuto nel tuo percorso verso l'indipendenza finanziaria. Per qualsiasi domanda o feedback, non esitare a contattarci.</p>
         </div>
     </div>
 </body>

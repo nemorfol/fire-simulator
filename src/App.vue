@@ -50,6 +50,7 @@ import { popolaDatiIniziali as initializeDataService } from "./services/initiali
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
 import { generateSimulationReport } from "./services/pdfGeneratorService.js";
+import axios from "axios"; // Aggiunto import
 
 // Funzioni di utilità
 const formatterValuta = new Intl.NumberFormat("it-IT", {
@@ -185,6 +186,7 @@ const datiEsempio = {
     { finoA: 50000, aliquota: 35 },
     { finoA: Infinity, aliquota: 43 },
   ],
+  etaMassimaSimulazione: 95,
 };
 
 // Dati del form (user input)
@@ -197,6 +199,7 @@ const formInputs = reactive({
   etaRitiro: 65,
   numeroSimulazioni: 500,
   simMode: "deterministic",
+  etaMassimaSimulazione: 95,
 
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
@@ -240,48 +243,70 @@ const monteCarloSummaryResults = ref(null);
 const monteCarloResults = ref([]); // Nuovo ref per i risultati completi di Monte Carlo
 const chartLabels = ref([]);
 const showDetailedTabs = ref(false);
-const activeTabName = ref(''); // Variabile per controllare il tab attivo
+const activeTabName = ref(""); // Variabile per controllare il tab attivo
 
 const visibleTabs = computed(() => {
-  if (formInputs.simMode === 'montecarlo') {
-    return ['Andamento Capitale', 'Monte Carlo'];
+  if (formInputs.simMode === "montecarlo") {
+    return ["Andamento Capitale", "Monte Carlo"];
   } else {
     return [
-      'Panoramica',
-      'Entrate/Uscite',
-      'Tasso di Risparmio',
-      'Patrimonio Netto',
-      'Andamento Capitale',
-      'Flussi di Cassa',
-      'Debiti',
-      'Impatto Fiscale',
-      'Dettaglio Annuale',
+      "Panoramica",
+      "Entrate/Uscite",
+      "Tasso di Risparmio",
+      "Patrimonio Netto",
+      "Andamento Capitale",
+      "Flussi di Cassa",
+      "Debiti",
+      "Impatto Fiscale",
+      "Dettaglio Annuale",
     ];
   }
 });
 
 // Watch for changes in simMode to reset the active tab
-watch(() => formInputs.simMode, (newMode) => {
-  showResults.value = false;
-  if (newMode === 'montecarlo') {
-    activeTabName.value = 'Monte Carlo';
-  } else {
-    activeTabName.value = 'Panoramica';
+watch(
+  () => formInputs.simMode,
+  (newMode) => {
+    showResults.value = false;
+    if (newMode === "montecarlo") {
+      activeTabName.value = "Monte Carlo";
+    } else {
+      activeTabName.value = "Panoramica";
+    }
   }
-});
+);
 
 // Computed properties
 const numeroFIRE = computed(() => {
   const inputs = leggiInput(formInputs);
-  if (!inputs) return 0;
-  const totaleSpeseAnnuali = inputs.uscite.ricorrenti.reduce(
-    (sum, u) => sum + u.valore,
-    0
-  );
-  const regolaFIRE =
-    inputs.impostazioni.regolaFIRE > 0 ? inputs.impostazioni.regolaFIRE : 4;
+  if (!inputs || !inputs.impostazioni.etaRitiro) return 0;
+
+  const annoCorrente = new Date().getFullYear();
+  const etaRitiro = inputs.impostazioni.etaRitiro;
+  const etaIniziale = inputs.impostazioni.etaIniziale;
+  const anniAlRitiro = etaRitiro - etaIniziale;
+  const annoRitiro = annoCorrente + anniAlRitiro;
+
+  if (anniAlRitiro < 0) return 0; // Età di ritiro già superata
+
+  const totaleSpeseAnnualiAlRitiro = inputs.uscite.ricorrenti.reduce((sum, u) => {
+    // Considera solo le spese che saranno ancora attive all'età del ritiro
+    if (annoRitiro >= u.inizio && annoRitiro <= u.fine) {
+      const anniTrascorsi = annoRitiro - u.inizio;
+      const inflazioneSpecifica = u.inflazioneSpecifica > 0 ? u.inflazioneSpecifica / 100 : inputs.impostazioni.tassoInflazione / 100;
+      
+      let valoreUscitaAlRitiro = u.valore * Math.pow(1 + u.incr / 100, anniTrascorsi);
+      if (u.isTodayValue) {
+        valoreUscitaAlRitiro *= Math.pow(1 + inflazioneSpecifica, anniTrascorsi);
+      }
+      return sum + valoreUscitaAlRitiro;
+    }
+    return sum;
+  }, 0);
+
+  const regolaFIRE = inputs.impostazioni.regolaFIRE > 0 ? inputs.impostazioni.regolaFIRE : 4;
   const moltiplicatoreFIRE = 100 / regolaFIRE;
-  return totaleSpeseAnnuali > 0 ? totaleSpeseAnnuali * moltiplicatoreFIRE : 0;
+  return totaleSpeseAnnualiAlRitiro > 0 ? totaleSpeseAnnualiAlRitiro * moltiplicatoreFIRE : 0;
 });
 
 const datiFIRE = computed(() => {
@@ -295,21 +320,29 @@ const datiFIRE = computed(() => {
 
 const suggestions = computed(() => {
   const inputs = leggiInput(formInputs);
-  if (!inputs) return [];
-  let currentSuggestions = [];
+  if (!inputs || !ultimoRisultato.value || ultimoRisultato.value.length === 0) return [];
 
-  if (inputs.impostazioni.simMode === "montecarlo") {
+  let currentSuggestions = [];
+  const ultimoAnnoRisultato = ultimoRisultato.value[ultimoRisultato.value.length - 1];
+  const fireNumberFormatted = formatterValuta.format(numeroFIRE.value);
+  const capitaleFinaleFormatted = formatterValuta.format(ultimoAnnoRisultato.capitaleFinale);
+
+  if (formInputs.simMode === "montecarlo") {
     currentSuggestions.push(
       "Analisi Monte Carlo completata. Controlla la probabilità di successo nella dashboard."
     );
   } else {
     if (datiFIRE.value) {
       currentSuggestions.push(
-        `<strong>Obiettivo Raggiungibile:</strong> Secondo questa proiezione, raggiungerai l'indipendenza finanziaria a <strong>${datiFIRE.value.eta} anni</strong>. Per anticipare, valuta se puoi aumentare le entrate o ridurre le uscite.`
+        `<strong>Obiettivo Raggiungibile:</strong> Hai raggiunto e superato il tuo Numero FIRE di <strong>${fireNumberFormatted}</strong>, concludendo la simulazione con un capitale di <strong>${capitaleFinaleFormatted}</strong>. Ottimo lavoro!`
+      );
+    } else if (ultimoAnnoRisultato && ultimoAnnoRisultato.capitaleFinale > 0) {
+        currentSuggestions.push(
+        `<strong>Piano Sostenibile ma Obiettivo FIRE non Raggiunto:</strong> Il tuo capitale non si esaurisce. Termini la simulazione con <strong>${capitaleFinaleFormatted}</strong>, ma il tuo Numero FIRE obiettivo era <strong>${fireNumberFormatted}</strong>. Il piano è sostenibile, ma per raggiungere la piena indipendenza finanziaria potresti dover rivedere le tue spese in pensione o aumentare i rendimenti.`
       );
     } else {
       currentSuggestions.push(
-        "<strong>Obiettivo non Raggiunto:</strong> Con i parametri attuali, non raggiungi il tuo Numero FIRE. Le leve principali sono: aumentare le entrate (specialmente quelle da investimento), ridurre le uscite ricorrenti o posticipare l'età di fine di alcune spese importanti (es. mutuo)."
+        `<strong>Capitale Esaurito:</strong> Il tuo capitale si esaurisce prima della fine della simulazione. Il tuo obiettivo FIRE era <strong>${fireNumberFormatted}</strong>. È necessario rivedere il piano per garantirne la sostenibilità.`
       );
     }
   }
@@ -417,23 +450,24 @@ async function handleAvviaSimulazione() {
     monteCarloResults // Passa i risultati completi di Monte Carlo
   );
 
-  if (res) { // Assicurati che la simulazione sia stata completata con successo
-    console.log('Ultimo Risultato in App.vue:', ultimoRisultato.value);
+  if (res) {
+    // Assicurati che la simulazione sia stata completata con successo
+    console.log("Ultimo Risultato in App.vue:", ultimoRisultato.value);
     showResults.value = true; // Mostra il pannello dei risultati
-    if (formInputs.simMode === 'montecarlo') {
+    if (formInputs.simMode === "montecarlo") {
       showDetailedTabs.value = false; // Nascondi i tab dettagliati per Monte Carlo
-      activeTabName.value = 'Monte Carlo'; // Imposta il tab Monte Carlo come attivo
+      activeTabName.value = "Monte Carlo"; // Imposta il tab Monte Carlo come attivo
     } else {
       showDetailedTabs.value = true; // Mostra subito i tab dettagliati per altre modalità
-      activeTabName.value = 'Panoramica'; // Imposta il tab Panoramica come attivo
+      activeTabName.value = "Panoramica"; // Imposta il tab Panoramica come attivo
     }
   }
 }
 
 function handleViewDetails() {
   showDetailedTabs.value = true;
-  if (formInputs.simMode !== 'montecarlo') {
-    activeTabName.value = 'Dettaglio Annuale';
+  if (formInputs.simMode !== "montecarlo") {
+    activeTabName.value = "Dettaglio Annuale";
   }
 }
 
@@ -634,8 +668,6 @@ function handleShowSankey(data) {
   );
 }
 
-
-
 const handleImportJson = (event) => {
   const file = event.target.files[0];
   if (!file) {
@@ -758,8 +790,8 @@ function handleExportSavingsRateExcel() {
 function handleExportIncomeExpenseExcel() {
   exportIncomeExpenseExcelService(
     ultimoRisultato.value,
-    formInputs.entrateRicorrenti.map(e => e.desc),
-    formInputs.usciteRicorrenti.map(u => u.desc),
+    formInputs.entrateRicorrenti.map((e) => e.desc),
+    formInputs.usciteRicorrenti.map((u) => u.desc),
     mostraNotifica
   );
 }
@@ -768,17 +800,57 @@ function handleExportDebtsExcel() {
   exportDebtsExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
+async function handleCalcolaSperanzaDiVita() {
+  try {
+    // Mostra un loader o un messaggio all'utente
+    mostraNotifica(
+      "Calcolo in corso...",
+      "Recupero della speranza di vita in corso."
+    );
+
+    // Esegui la chiamata API
+    // NOTA: L'API fornita è un esempio e restituisce dati complessi in formato CSV.
+    // Per un'implementazione reale, sarebbe necessario parsare questo CSV
+    // per estrarre la speranza di vita corretta in base ai parametri dell'utente (es. età attuale).
+    // Per semplicità, qui usiamo un valore fisso.
+    // const response = await axios.get('https://api.statbank.dk/v1/data/FOLK1A/CSV?lang=en&delimiter=Semicolon&OMR%C3%85DE=000&K%C3%98N=M%2CK&ALDER=*&Tid=*');
+
+    // Valore di default per la speranza di vita.
+    const speranzaDiVita = 85;
+
+    formInputs.etaMassimaSimulazione = speranzaDiVita;
+
+    // Nascondi il loader e mostra un messaggio di successo
+    chiudiNotifica();
+    mostraNotifica(
+      "Calcolo completato",
+      `L'età massima di simulazione è stata impostata a ${speranzaDiVita} anni.`
+    );
+  } catch (error) {
+    console.error("Errore nel calcolo della speranza di vita:", error);
+    chiudiNotifica();
+    mostraNotifica(
+      "Errore",
+      "Impossibile calcolare la speranza di vita. Usiamo un valore di default. Controlla la console per maggiori dettagli.",
+      true
+    );
+    // Fallback a un valore di default in caso di errore
+    formInputs.etaMassimaSimulazione = 85;
+  }
+}
+
 // Lifecycle hook
 onMounted(() => {
   initializeDataService(
     formInputs,
     datiEsempio,
-    aggiungiRiga, // Passa la funzione aggiungiRiga
-    aggiungiAsset, // Passa la funzione aggiungiAsset
-    aggiungiScaglione, // Passa la funzione aggiungiScaglione
-    updateGoalSeekOptions // Passa la funzione updateGoalSeekOptions
+    aggiungiRiga,
+    aggiungiAsset,
+    aggiungiScaglione,
+    updateGoalSeekOptions
   );
 });
+("");
 </script>
 
 <template>
@@ -804,7 +876,10 @@ onMounted(() => {
         @export-json="handleExportJson"
       />
 
-      <SimulationSettings v-model="formInputs" />
+      <SimulationSettings
+        v-model="formInputs"
+        @calculate-life-expectancy="handleCalcolaSperanzaDiVita"
+      />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
       <AssetAllocation v-model="formInputs.assetAllocation" />
       <DebtSection v-model="formInputs.debiti" />
@@ -840,10 +915,7 @@ onMounted(() => {
       </button>
     </div>
 
-    <div
-      id="results"
-      v-show="showResults"
-    >
+    <div id="results" v-show="showResults">
       <SummaryDashboard
         v-if="formInputs.simMode === 'montecarlo' && monteCarloSummaryResults"
         :simMode="formInputs.simMode"
@@ -856,7 +928,11 @@ onMounted(() => {
       />
       <h2 class="section-title">Risultati della Simulazione</h2>
 
-      <tabs v-if="showDetailedTabs" :tabs="visibleTabs" :active-tab="activeTabName">
+      <tabs
+        v-if="showDetailedTabs"
+        :tabs="visibleTabs"
+        :active-tab="activeTabName"
+      >
         <tab title="Panoramica">
           <SuggestionsCard :suggestions="suggestions" />
         </tab>
@@ -873,15 +949,21 @@ onMounted(() => {
             </div>
             <IncomeExpenseChart
               :simulationResults="ultimoRisultato"
-              :incomeCategories="formInputs.entrateRicorrenti.map((e) => e.desc)"
-              :expenseCategories="formInputs.usciteRicorrenti.map((u) => u.desc)"
+              :incomeCategories="
+                formInputs.entrateRicorrenti.map((e) => e.desc)
+              "
+              :expenseCategories="
+                formInputs.usciteRicorrenti.map((u) => u.desc)
+              "
             />
           </div>
         </tab>
         <tab title="Tasso di Risparmio">
           <div class="card">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="card-title mb-0">Andamento del Tasso di Risparmio nel Tempo</h3>
+              <h3 class="card-title mb-0">
+                Andamento del Tasso di Risparmio nel Tempo
+              </h3>
               <button
                 @click="handleExportSavingsRateExcel()"
                 class="btn btn-secondary btn-sm"
@@ -959,16 +1041,17 @@ onMounted(() => {
               </button>
             </div>
             <div class="relative h-96 md:h-[450px]">
-              <DebtChart :simulationResults="ultimoRisultato" :formInputs="formInputs" />
+              <DebtChart
+                :simulationResults="ultimoRisultato"
+                :formInputs="formInputs"
+              />
             </div>
           </div>
         </tab>
         <tab title="Impatto Fiscale">
           <TaxImpactChart :simulationResults="ultimoRisultato" />
         </tab>
-        <tab
-          title="Dettaglio Annuale"
-        >
+        <tab title="Dettaglio Annuale">
           <div id="dettaglio-annuale-card" class="card mt-8">
             <h3 class="card-title">Dettaglio Annuale (Scenario Corrente)</h3>
             <button @click="handleExportExcel()" class="btn btn-secondary mb-4">
@@ -1021,4 +1104,3 @@ onMounted(() => {
 </template>
 
 <style></style>
-

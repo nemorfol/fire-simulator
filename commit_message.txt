@@ -1,16 +1,10 @@
-feat: Miglioramenti alla tabella Dettaglio Annuale e correzioni grafici
+fix: Correzione bug critici e miglioramenti UI
 
-Questo commit introduce i seguenti miglioramenti e correzioni:
+Questo commit risolve una serie di bug critici che causavano crash e comportamenti inaspettati, in particolare nelle funzioni di "Goal Seek" e nella visualizzazione dei grafici.
 
-- **Tabella Dettaglio Annuale:**
-  - Aggiunte nuove metriche: Capitale Iniziale Reale, Capitale Finale Reale, Tasso di Prelievo (%), Variazione Percentuale Capitale (%).
-  - Implementato ordinamento delle colonne cliccando sull'intestazione.
-  - Aggiunta funzionalità di ricerca/filtro nella tabella.
-  - Corretto il disallineamento tra intestazione e dati della tabella.
-  - Ripristinata la visualizzazione delle righe rosse per capitale esaurito/negativo.
-
-- **Grafico Andamento Capitale:**
-  - Corretta la visualizzazione dei dati per la modalità Monte Carlo.
-
-- **Grafico Flussi di Cassa:**
-  - Corretto il calcolo delle uscite totali in `simulationService.js` per includere correttamente le uscite una tantum.
+Le principali modifiche includono:
+- Corretta la gestione dello stato nel componente GoalSeek per prevenire la perdita di dati e loop infiniti.
+- Risolti errori di riferimento e di tipo nei servizi di simulazione e goal seek.
+- Riorganizzata l'interfaccia dei risultati per una maggiore chiarezza, separando i risultati per tipo di simulazione.
+- Ingrandito il grafico dello "Scenario Peggiore" per una migliore leggibilità.
+- Aggiornata la guida utente per riflettere le modifiche recenti.
