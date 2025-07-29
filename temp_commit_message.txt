@@ -1,0 +1,3 @@
+feat: Implementata applicazione scenari di crisi in simulazione deterministica
+
+Questo commit implementa la funzionalità di applicazione degli scenari di crisi anche per la simulazione deterministica. Il pattern di rendimento dello scenario selezionato viene applicato ai primi anni della simulazione, indipendentemente dagli anni storici della crisi.

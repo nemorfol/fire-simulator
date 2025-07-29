@@ -188,15 +188,27 @@ export function calcolaProiezione(
     let totaleRataDebiti = 0;
     debitiAttivi.forEach(debito => {
       if (anno >= debito.annoInizio && debito.capitaleResiduo > 0) {
-        const rataCorrente = calculatePMT(debito.importoIniziale, debito.tassoInteresse, debito.durataAnni);
-        totaleRataDebiti += rataCorrente;
-        risultatoAnno[`Rata ${debito.desc}`] = rataCorrente;
-        debito.capitaleResiduo = Math.max(0, debito.capitaleResiduo - (rataCorrente - (debito.capitaleResiduo * debito.tassoInteresse / 100)));
+        const interesseAnnuo = debito.capitaleResiduo * (debito.tassoInteresse / 100);
+        // La rata effettiva non può superare il capitale residuo più gli interessi (per l'ultimo anno)
+        const rataEffettiva = Math.min(debito.rataAnnua, debito.capitaleResiduo + interesseAnnuo);
+        
+        totaleRataDebiti += rataEffettiva;
+        risultatoAnno[`Rata ${debito.desc}`] = rataEffettiva;
+
+        const quotaCapitalePagata = rataEffettiva - interesseAnnuo;
+        debito.capitaleResiduo -= quotaCapitalePagata;
+
+        if (debito.capitaleResiduo < 0.01) {
+            debito.capitaleResiduo = 0;
+        }
+        
         risultatoAnno[`Capitale Residuo ${debito.desc}`] = debito.capitaleResiduo;
         debito.anniRimanenti--;
+
       } else {
         risultatoAnno[`Rata ${debito.desc}`] = 0;
-        risultatoAnno[`Capitale Residuo ${debito.desc}`] = 0;
+        // Manteniamo il capitale residuo nel report solo se il debito è già iniziato
+        risultatoAnno[`Capitale Residuo ${debito.desc}`] = (anno >= debito.annoInizio) ? debito.capitaleResiduo : 0;
       }
     });
     risultatoAnno.totaleRataDebiti = totaleRataDebiti;
@@ -382,6 +394,11 @@ export function calcolaProiezione(
       risultatoAnno.withdrawalRate = 0;
     }
 
+    // Calcolo del Tasso di Risparmio
+    const redditoNettoPerRisparmio = totalIncomeForYear - imposteTotali; // Reddito al netto delle tasse
+    const risparmioEffettivo = redditoNettoPerRisparmio - totalExpensesForYear;
+    risultatoAnno.tassoRisparmio = redditoNettoPerRisparmio > 0 ? (risparmioEffettivo / redditoNettoPerRisparmio) * 100 : 0;
+
     // Calcolo della variazione percentuale del capitale
     if (risultatiFinali.length > 0) {
       const capitalePrecedente = risultatiFinali[risultatiFinali.length - 1].capitaleFinale;
@@ -447,6 +464,7 @@ export function mostraRisultatiDeterministici(
       capitaleInizialeReale: r.capitaleInizialeReale,
       capitaleFinaleReale: r.capitaleFinaleReale,
       withdrawalRate: r.withdrawalRate,
+      tassoRisparmio: r.tassoRisparmio,
       variazionePercentualeCapitale: r.variazionePercentualeCapitale,
     };
     return row;
@@ -470,6 +488,7 @@ export function mostraRisultatiDeterministici(
     "capitaleInizialeReale",
     "capitaleFinaleReale",
     "withdrawalRate",
+    "tassoRisparmio",
     "variazionePercentualeCapitale",
   ];
 

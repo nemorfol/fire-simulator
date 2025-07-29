@@ -136,21 +136,37 @@
             </div>
 
             <h2 id="risultati-simulazione">4. Risultati della Simulazione</h2>
-            <p>Dopo aver cliccato su "Avvia Simulazione", i risultati verranno visualizzati in diverse dashboard e grafici.</p>
+            <p>I risultati visualizzati cambiano in base alla modalità di simulazione scelta (Deterministica o Monte Carlo) per fornire le informazioni più pertinenti.</p>
+
+            <h3>4.1 Risultati per Simulazione Deterministica e Backtest</h3>
+            <p>Quando si esegue una simulazione deterministica o un backtest, i risultati sono presentati in una serie di schede (tab) dedicate:</p>
             <ul>
-                <li><strong>Summary Dashboard:</strong> Riepilogo dei risultati chiave, inclusa la probabilità di successo per le simulazioni Monte Carlo e l'età FIRE.</li>
-                <li><strong>Andamento del Capitale nel Tempo:</strong> Un grafico interattivo che mostra l'evoluzione del tuo capitale. Per Monte Carlo, vedrai percentili (es. 25°, 50°, 75°) che indicano la distribuzione dei possibili risultati.</li>
-                <li><strong>Andamento Flussi di Cassa:</strong> Grafico che riassume entrate, uscite e flusso di cassa netto annuale.</li>
-                <li><strong>Dettaglio Annuale:</strong> Una tabella dettagliata con i dati finanziari anno per anno. Puoi cliccare su "Mostra Sankey" per visualizzare un diagramma di flusso dettagliato per un anno specifico, che ora include la scomposizione delle singole voci di entrata, uscita, tasse e risparmio.</li>
-                <div class="usage-tip">
-                    <strong>Nuova Funzionalità Sankey:</strong> Il diagramma di Sankey ora offre una visione granulare dei flussi finanziari. Ogni singola entrata (es. Stipendio, Affitto) e uscita (es. Spese Casa, Trasporti) viene mostrata come un flusso distinto, permettendoti di analizzare in dettaglio da dove provengono e dove vanno i soldi in un dato anno.
-                </div>
-                <div class="usage-tip">
-                    <strong>Navigazione Rapida:</strong> Cliccando sul pulsante "Visualizza dettagli simulazione" (presente nella Dashboard Panoramica), verrai automaticamente reindirizzato a questo tab "Dettaglio Annuale" per un'analisi immediata dei risultati anno per anno.
-                </div>
-                <li><strong>Righe Rosse nella Tabella Dettaglio Annuale:</strong> Le righe evidenziate in rosso nella tabella "Dettaglio Annuale" indicano gli anni in cui il tuo capitale iniziale è sceso a zero o al di sotto. Questo è un segnale di allarme che indica un potenziale esaurimento del capitale.</li>
-                <li><strong>Worst Case Chart:</strong> Per le simulazioni Monte Carlo, mostra l'andamento del capitale nello scenario peggiore simulato.</li>
-                </ul>
+                <li><strong>Panoramica:</strong> Mostra esclusivamente i suggerimenti e le analisi strategiche generate sulla base dei risultati.</li>
+                <li><strong>Schede Grafiche:</strong> Ogni aspetto chiave della simulazione ha una scheda dedicata con un grafico interattivo (Andamento Capitale, Flussi di Cassa, Tasso di Risparmio, Patrimonio Netto, Debiti, Impatto Fiscale).</li>
+                <li><strong>Dettaglio Annuale:</strong> Una tabella dettagliata con i dati finanziari anno per anno. Da qui è possibile:
+                    <ul>
+                        <li>Visualizzare un diagramma di <strong>Sankey</strong> per analizzare i flussi finanziari di un anno specifico.</li>
+                        <li>Identificare gli anni critici (evidenziati in rosso) in cui il capitale si esaurisce.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>4.2 Risultati per Simulazione Monte Carlo</h3>
+            <p>La modalità Monte Carlo offre una visione probabilistica e più complessa, strutturata come segue:</p>
+            <ul>
+                <li><strong>Dashboard di Riepilogo:</strong> Appare in cima ai risultati e mostra le statistiche chiave della simulazione: probabilità di successo, numero di simulazioni fallite e l'età media di esaurimento del capitale.</li>
+                <li><strong>Schede Principali:</strong>
+                    <ul>
+                        <li><strong>Andamento Capitale:</strong> Un grafico che mostra la distribuzione dei possibili risultati del capitale nel tempo, visualizzando il 25°, 50° (mediana) e 75° percentile.</li>
+                        <li><strong>Monte Carlo:</strong> Questa scheda contiene due grafici fondamentali:
+                            <ul>
+                                <li>Un grafico di distribuzione che mostra l'andamento di tutte le singole simulazioni.</li>
+                                <li>Il grafico dello <strong>Scenario Peggiore</strong>, che mostra l'evoluzione del capitale nel caso peggiore tra tutte le simulazioni eseguite. Questo grafico è stato ingrandito per una migliore leggibilità.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
 
             <h2 id="goal-seek">5. Goal Seek</h2>
             <p>La funzione "Goal Seek" è uno strumento potente per l'ottimizzazione. Ti aiuta a trovare quale parametro (es. aumentare un'entrata, ridurre un'uscita) deve essere modificato per raggiungere un obiettivo specifico (es. raggiungere il FIRE a una certa età o con un certo capitale finale).</p>

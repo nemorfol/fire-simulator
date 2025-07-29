@@ -1,6 +1,6 @@
 <template>
   <div class="relative h-96 md:h-[450px]">
-    <canvas ref="netWorthChartCanvas"></canvas>
+    <canvas ref="debtChartCanvas"></canvas>
   </div>
 </template>
 
@@ -13,32 +13,37 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  formInputs: {
+    type: Object,
+    required: true,
+  },
 });
 
 const chartInstance = ref(null);
-const netWorthChartCanvas = ref(null);
+const debtChartCanvas = ref(null);
 
 const drawChart = () => {
-  if (!netWorthChartCanvas.value) return;
+  if (!debtChartCanvas.value) return;
 
   const labels = props.simulationResults.map(r => r.anno);
-  const data = props.simulationResults.map(r => r.capitaleFinale);
+  const datasets = props.formInputs.debiti.map((d, index) => {
+    const color = `hsl(${(index * 137.5) % 360}, 70%, 50%)`;
+    return {
+      label: `Capitale Residuo ${d.desc}`,
+      data: props.simulationResults.map(r => r[`Capitale Residuo ${d.desc}`] || 0),
+      borderColor: color,
+      backgroundColor: `${color}33`, // 20% opacity
+      fill: true,
+      tension: 0.1,
+    };
+  });
 
   const chartData = {
     labels: labels,
-    datasets: [
-      {
-        label: 'Patrimonio Netto',
-        data: data,
-        borderColor: '#2196F3',
-        backgroundColor: 'rgba(33, 150, 243, 0.2)',
-        fill: true,
-        tension: 0.1,
-      },
-    ],
+    datasets: datasets,
   };
 
-  const ctx = netWorthChartCanvas.value.getContext('2d');
+  const ctx = debtChartCanvas.value.getContext('2d');
   if (chartInstance.value) {
     chartInstance.value.data = chartData;
     chartInstance.value.update();
@@ -57,7 +62,7 @@ const drawChart = () => {
             },
             title: {
               display: true,
-              text: 'Patrimonio Netto (€)',
+              text: 'Capitale Residuo (€)',
             },
           },
           x: {
@@ -84,7 +89,7 @@ const drawChart = () => {
           },
            title: {
             display: true,
-            text: 'Andamento del Patrimonio Netto nel Tempo',
+            text: 'Andamento dei Debiti nel Tempo',
             font: {
               size: 16,
               weight: 'bold',
@@ -102,7 +107,7 @@ onMounted(() => {
   });
 });
 
-watch(() => props.simulationResults, () => {
+watch(() => [props.simulationResults, props.formInputs.debiti], () => {
   nextTick(() => {
     drawChart();
   });

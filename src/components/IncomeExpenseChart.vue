@@ -1,6 +1,12 @@
+<template>
+  <div class="relative h-[600px]">
+    <canvas ref="incomeExpenseChartCanvas"></canvas>
+  </div>
+</template>
+
 <script setup>
-import { defineProps, watch, ref } from 'vue';
-import Plotly from 'plotly.js-dist-min';
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, markRaw } from 'vue';
+import Chart from 'chart.js/auto';
 
 const props = defineProps({
   simulationResults: {
@@ -17,86 +23,102 @@ const props = defineProps({
   },
 });
 
-const chartDiv = ref(null);
+const chartInstance = ref(null);
+const incomeExpenseChartCanvas = ref(null);
 
 const drawChart = () => {
-  if (!props.simulationResults || props.simulationResults.length === 0 || !chartDiv.value) {
-    return;
-  }
+  if (!incomeExpenseChartCanvas.value || !props.simulationResults || props.simulationResults.length === 0) return;
 
-  const years = props.simulationResults.map(r => r.anno);
-  const incomeTraces = [];
-  const expenseTraces = [];
+  const labels = props.simulationResults.map(r => r.anno);
+  
+  const incomeColors = ['#4CAF50', '#81C784', '#A5D6A7', '#C8E6C9'];
+  const expenseColors = ['#F44336', '#E57373', '#EF9A9A', '#FFCDD2'];
 
-  // Raccogli tutte le descrizioni di entrate e uscite dalle prop
-  const allIncomeDescs = Array.from(new Set(props.incomeCategories));
-  const allExpenseDescs = Array.from(new Set(props.expenseCategories));
+  const incomeDatasets = props.incomeCategories.map((category, index) => ({
+    label: category,
+    data: props.simulationResults.map(r => r[category] || 0),
+    backgroundColor: incomeColors[index % incomeColors.length],
+    stack: 'income'
+  }));
 
-  const incomeColors = ['#4CAF50', '#66BB6A', '#81C784', '#A5D6A7', '#C8E6C9', '#E8F5E9']; // Sfumature di verde
-  const expenseColors = ['#F44336', '#E57373', '#EF9A9A', '#FFCDD2', '#FFEBEE', '#FFEBEE']; // Sfumature di rosso
+  const expenseDatasets = props.expenseCategories.map((category, index) => ({
+    label: category,
+    data: props.simulationResults.map(r => (r[category] || 0)), // Valori positivi per la visualizzazione
+    backgroundColor: expenseColors[index % expenseColors.length],
+    stack: 'expense'
+  }));
 
-  // Crea le tracce per le entrate
-  allIncomeDescs.forEach((desc, index) => {
-    const values = props.simulationResults.map(r => r[desc] || 0);
-    const color = incomeColors[index % incomeColors.length];
-    incomeTraces.push({
-      x: years,
-      y: values,
-      name: desc,
-      type: 'bar',
-      marker: { color: color }, // Colore dalla palette
-      hovertemplate: `<b>%{x}</b><br>%{fullData.name}: %{y:.2f}<extra></extra>`,
-    });
-  });
-
-  // Crea le tracce per le uscite
-  allExpenseDescs.forEach((desc, index) => {
-    const values = props.simulationResults.map(r => -(r[desc] || 0)); // Valori negativi per le uscite
-    const color = expenseColors[index % expenseColors.length];
-    expenseTraces.push({
-      x: years,
-      y: values,
-      name: desc,
-      type: 'bar',
-      marker: { color: color }, // Colore dalla palette
-      hovertemplate: `<b>%{x}</b><br>%{fullData.name}: %{y:.2f}<extra></extra>`,
-    });
-  });
-
-  const data = [...incomeTraces, ...expenseTraces];
-
-  const layout = {
-    barmode: 'relative',
-    title: {
-      text: 'Entrate e Uscite per Categoria nel Tempo',
-      y: 0.95, // Posiziona il titolo più in alto (0.95 è vicino al top)
-      yref: 'paper', // Riferimento alla "carta" del grafico (0 a 1)
-    },
-    xaxis: { title: 'Anno' },
-    yaxis: { title: 'Importo (€)' },
-    height: 1000,
-    width: 1620,
-    margin: { t: 50, b: 50, l: 50, r: 50 },
+  const chartData = {
+    labels: labels,
+    datasets: [...incomeDatasets, ...expenseDatasets],
   };
 
-  Plotly.newPlot(chartDiv.value, data, layout);
+  const ctx = incomeExpenseChartCanvas.value.getContext('2d');
+  if (chartInstance.value) {
+    chartInstance.value.data = chartData;
+    chartInstance.value.update();
+  } else {
+    chartInstance.value = markRaw(new Chart(ctx, {
+      type: 'bar',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            stacked: true,
+            title: { display: true, text: 'Anno' }
+          },
+          y: {
+            stacked: true,
+            title: { display: true, text: 'Importo (€)' },
+            ticks: {
+              callback: (value) => new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value)
+            }
+          }
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: 'Entrate e Uscite per Categoria nel Tempo',
+            font: { size: 16, weight: 'bold' }
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                }
+                return label;
+              }
+            }
+          }
+        }
+      }
+    }));
+  }
 };
 
-watch(() => props.simulationResults, drawChart, { deep: true, immediate: true });
-watch(() => props.incomeCategories, drawChart, { deep: true });
-watch(() => props.expenseCategories, drawChart, { deep: true });
+onMounted(() => {
+  nextTick(drawChart);
+});
+
+watch(() => [props.simulationResults, props.incomeCategories, props.expenseCategories], () => {
+  nextTick(drawChart);
+}, { deep: true });
+
+onBeforeUnmount(() => {
+  if (chartInstance.value) {
+    chartInstance.value.destroy();
+    chartInstance.value = null;
+  }
+});
 </script>
 
-<template>
-  <div ref="chartDiv" class="income-expense-chart"></div>
-</template>
-
 <style scoped>
-.income-expense-chart {
-  margin-top: 20px;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+/* Stili specifici se necessari */
 </style>

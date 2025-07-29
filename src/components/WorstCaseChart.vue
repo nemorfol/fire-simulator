@@ -74,7 +74,7 @@ const chartOptions = {
 </script>
 
 <template>
-  <div class="relative h-96 md:h-[450px]">
+  <div class="relative" style="height: 700px !important;">
     <Line :data="chartData" :options="chartOptions" />
   </div>
 </template>

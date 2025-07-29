@@ -1,6 +1,6 @@
 <template>
   <div class="relative h-96 md:h-[450px]">
-    <canvas ref="netWorthChartCanvas"></canvas>
+    <canvas ref="savingsRateChartCanvas"></canvas>
   </div>
 </template>
 
@@ -16,29 +16,29 @@ const props = defineProps({
 });
 
 const chartInstance = ref(null);
-const netWorthChartCanvas = ref(null);
+const savingsRateChartCanvas = ref(null);
 
 const drawChart = () => {
-  if (!netWorthChartCanvas.value) return;
+  if (!savingsRateChartCanvas.value) return;
 
   const labels = props.simulationResults.map(r => r.anno);
-  const data = props.simulationResults.map(r => r.capitaleFinale);
+  const data = props.simulationResults.map(r => r.tassoRisparmio);
 
   const chartData = {
     labels: labels,
     datasets: [
       {
-        label: 'Patrimonio Netto',
+        label: 'Tasso di Risparmio',
         data: data,
-        borderColor: '#2196F3',
-        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76, 175, 80, 0.2)',
         fill: true,
         tension: 0.1,
       },
     ],
   };
 
-  const ctx = netWorthChartCanvas.value.getContext('2d');
+  const ctx = savingsRateChartCanvas.value.getContext('2d');
   if (chartInstance.value) {
     chartInstance.value.data = chartData;
     chartInstance.value.update();
@@ -52,12 +52,12 @@ const drawChart = () => {
         scales: {
           y: {
             ticks: {
-              callback: (value) => `€ ${value.toLocaleString()}`,
+              callback: (value) => `${value.toFixed(0)}%`,
               font: { weight: 'bold' },
             },
             title: {
               display: true,
-              text: 'Patrimonio Netto (€)',
+              text: 'Tasso di Risparmio (%)',
             },
           },
           x: {
@@ -74,7 +74,7 @@ const drawChart = () => {
           tooltip: {
             callbacks: {
               label: (context) =>
-                `${context.dataset.label || ''}: € ${context.parsed.y.toLocaleString()}`,
+                `${context.dataset.label || ''}: ${context.parsed.y.toFixed(2)}%`,
             },
           },
           legend: {
@@ -84,7 +84,7 @@ const drawChart = () => {
           },
            title: {
             display: true,
-            text: 'Andamento del Patrimonio Netto nel Tempo',
+            text: 'Andamento del Tasso di Risparmio nel Tempo',
             font: {
               size: 16,
               weight: 'bold',

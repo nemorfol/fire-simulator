@@ -1,5 +1,7 @@
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { defineProps, defineEmits, computed, ref, watch } from 'vue';
+import ExpenseCategoryChart from './ExpenseCategoryChart.vue';
+import ExpenseTrendChart from './ExpenseTrendChart.vue';
 
 const props = defineProps({
   usciteRicorrenti: {
@@ -18,6 +20,128 @@ const emit = defineEmits([
   'expenses-updated'
 ]);
 
+const selectedYear = ref(new Date().getFullYear()); // Default to current year
+
+const aggregatedExpenseData = computed(() => {
+  const data = {};
+  const currentYear = new Date().getFullYear();
+  
+  // Ensure selectedYear.value is a valid number
+  const yearToFilter = typeof selectedYear.value === 'number' ? selectedYear.value : new Date().getFullYear();
+
+  props.usciteRicorrenti.forEach(item => {
+    if (yearToFilter >= item.inizio && yearToFilter <= item.fine) {
+      const category = item.desc || 'Senza Categoria';
+      let value = parseFloat(item.valore || 0); // Ensure it's a number
+
+      const combinedRate = (parseFloat(item.incr || 0) / 100) + (parseFloat(item.inflazioneSpecifica || 0) / 100);
+      let yearsDiff;
+
+      if (item.isTodayValue) {
+        yearsDiff = yearToFilter - new Date().getFullYear();
+      } else {
+        yearsDiff = yearToFilter - item.inizio;
+      }
+
+      if (combinedRate !== 0) {
+        value *= Math.pow(1 + combinedRate, yearsDiff);
+      }
+
+      if (data[category]) {
+        data[category] += value;
+      } else {
+        data[category] = value;
+      }
+    }
+  });
+
+  return Object.keys(data).map(category => ({
+    category: category,
+    amount: data[category]
+  }));
+});
+
+console.log('Aggregated Expense Data (for selected year):', aggregatedExpenseData.value);
+
+const expenseTrendData = computed(() => {
+  const currentYear = new Date().getFullYear();
+  let minYear = currentYear;
+  let maxYear = currentYear + 50; // Default to 50 years in the future
+
+  // Determine the actual min and max years from recurring expenses
+  props.usciteRicorrenti.forEach(item => {
+    if (item.inizio && item.inizio < minYear) {
+      minYear = item.inizio;
+    }
+    if (item.fine) {
+      console.log(`Checking item.fine: ${item.fine}, current maxYear: ${maxYear}`);
+      if (item.fine > maxYear) {
+        maxYear = item.fine;
+        console.log(`maxYear updated to: ${maxYear}`);
+      }
+    }
+  });
+
+  const years = [];
+  for (let year = minYear; year <= maxYear; year++) {
+    years.push(year);
+  }
+  console.log('ExpenseTrendData - minYear:', minYear);
+  console.log('ExpenseTrendData - maxYear:', maxYear);
+  console.log('ExpenseTrendData - years array:', years);
+
+  const categories = [...new Set(props.usciteRicorrenti.map(item => item.desc || 'Senza Categoria'))];
+  const colors = [
+    '#4CAF50', // Green
+    '#2196F3', // Blue
+    '#FFC107', // Amber
+    '#F44336', // Red
+    '#9C27B0', // Purple
+    '#FF9800', // Orange
+    '#00BCD4', // Cyan
+    '#E91E63', // Pink
+    '#607D8B', // Blue Grey
+    '#795548', // Brown
+  ];
+
+  const datasets = categories.map((category, index) => ({
+    label: category,
+    data: years.map(year => {
+      let total = 0;
+      props.usciteRicorrenti.forEach(item => {
+        const itemCategory = item.desc || 'Senza Categoria';
+        if (itemCategory === category && year >= item.inizio && year <= item.fine) {
+          let value = parseFloat(item.valore || 0); // Ensure it's a number
+          const currentYear = new Date().getFullYear();
+
+          const combinedRate = (parseFloat(item.incr || 0) / 100) + (parseFloat(item.inflazioneSpecifica || 0) / 100);
+          let yearsDiff;
+
+          if (item.isTodayValue) {
+            yearsDiff = year - currentYear;
+          } else {
+            yearsDiff = year - item.inizio;
+          }
+
+          if (combinedRate !== 0) {
+            value *= Math.pow(1 + combinedRate, yearsDiff);
+          }
+          total += value;
+        }
+      });
+      return total;
+    }),
+    backgroundColor: colors[index % colors.length], // Use consistent color
+  }));
+
+  return {
+    labels: years,
+    datasets: datasets,
+  };
+});
+
+
+
 function addRiga(type, dati = {}) {
   if (type === 'usciteRicorrenti') {
     const newUscite = [...props.usciteRicorrenti, {
@@ -26,8 +150,8 @@ function addRiga(type, dati = {}) {
       isTodayValue: dati.isTodayValue !== undefined ? dati.isTodayValue : true,
       inizio: dati.inizio || new Date().getFullYear(),
       fine: dati.fine || new Date().getFullYear() + 50,
-      incr: dati.incr || 0,
-      inflazioneSpecifica: dati.inflazioneSpecifica || 0,
+      incr: dati.incr !== undefined ? dati.incr : null,
+      inflazioneSpecifica: dati.inflazioneSpecifica !== undefined ? dati.inflazioneSpecifica : null,
     }];
     emit('update:usciteRicorrenti', newUscite);
     emit('expenses-updated');
@@ -57,9 +181,12 @@ function removeRiga(type, index) {
 
 function updateUscitaRicorrente(index, field, value) {
   const newUscite = [...props.usciteRicorrenti];
-  if (field === 'valore' || field === 'incr' || field === 'inflazioneSpecifica') {
+  if (field === 'valore') {
     const parsedValue = parseFloat(value);
     newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
+  } else if (field === 'incr' || field === 'inflazioneSpecifica') {
+    const parsedValue = parseFloat(value);
+    newUscite[index][field] = isNaN(parsedValue) ? null : parsedValue; // Allow null if not a valid number
   } else if (field === 'inizio' || field === 'fine') {
     const parsedValue = parseInt(value);
     newUscite[index][field] = isNaN(parsedValue) || parsedValue < 0 ? 0 : parsedValue;
@@ -88,7 +215,7 @@ function updateUscitaLumpSum(index, field, value) {
 </script>
 
 <template>
-  <div class="card">
+  <div class="card flex flex-col items-center w-full">
     <h3 class="card-title">7. Uscite</h3>
     <div>
       <h4 class="text-lg font-bold mb-3">Uscite Ricorrenti</h4>
@@ -275,6 +402,19 @@ function updateUscitaLumpSum(index, field, value) {
       <option value="Ristrutturazione Casa"></option>
       <option value="Spese Mediche Straordinarie"></option>
     </datalist>
+    <div class="mt-6 flex flex-col items-center w-full">
+      <h4 class="text-lg font-bold mb-3">Analisi Spese per Categoria (Anno Selezionato: {{ selectedYear }})</h4>
+      <ExpenseCategoryChart :expenseData="aggregatedExpenseData" />
+    </div>
+
+    <div class="mt-6 flex flex-col items-center w-full">
+      <h4 class="text-lg font-bold mb-3">Andamento Spese Ricorrenti nel Tempo</h4>
+      <ExpenseTrendChart 
+        :labels="expenseTrendData.labels" 
+        :datasets="expenseTrendData.datasets"
+        @year-selected="selectedYear = $event"
+      />
+    </div>
   </div>
 </template>
 

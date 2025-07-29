@@ -1,4 +1,5 @@
 <script setup>
+// Force re-compilation
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import SimulationSettings from "./components/SimulationSettings.vue";
 import TaxBrackets from "./components/TaxBrackets.vue";
@@ -27,6 +28,8 @@ import TaxImpactChart from "./components/TaxImpactChart.vue"; // Nuovo import
 import IncomeExpenseTabs from "./components/IncomeExpenseTabs.vue"; // Nuovo import
 import Tab from "./components/Tab.vue"; // Nuovo import
 import Tabs from "./components/Tabs.vue"; // Nuovo import
+import SavingsRateChart from "./components/SavingsRateChart.vue"; // Nuovo import
+import DebtChart from "./components/DebtChart.vue";
 
 // Import services
 import { leggiInput } from "./services/financialCalculator";
@@ -36,6 +39,10 @@ import {
   esportaExcel as exportExcelService,
   esportaCapitaleExcel as exportCapitalExcelService,
   esportaFlussiExcel as exportCashFlowExcelService,
+  esportaTassoRisparmioExcel as exportSavingsRateExcelService,
+  esportaEntrateUsciteExcel as exportIncomeExpenseExcelService,
+  esportaDebitiExcel as exportDebtsExcelService, // Aggiunto
+  esportaMonteCarloExcel as exportMonteCarloExcelService,
   salvaConfronto as saveComparisonService,
   resetConfronto as resetComparisonService,
 } from "./services/dataManagementService.js";
@@ -210,6 +217,7 @@ const formInputs = reactive({
   usciteLumpSum: reactive([]),
   correlazioneAsset: "",
   debiti: reactive([]), // Nuovo campo per la gestione dei debiti
+  goalSeek: reactive({ goalSeekTarget: 65, goalSeekVariable: null }),
 });
 
 // Variabili per la UI
@@ -241,6 +249,7 @@ const visibleTabs = computed(() => {
     return [
       'Panoramica',
       'Entrate/Uscite',
+      'Tasso di Risparmio',
       'Patrimonio Netto',
       'Andamento Capitale',
       'Flussi di Cassa',
@@ -409,6 +418,7 @@ async function handleAvviaSimulazione() {
   );
 
   if (res) { // Assicurati che la simulazione sia stata completata con successo
+    console.log('Ultimo Risultato in App.vue:', ultimoRisultato.value);
     showResults.value = true; // Mostra il pannello dei risultati
     if (formInputs.simMode === 'montecarlo') {
       showDetailedTabs.value = false; // Nascondi i tab dettagliati per Monte Carlo
@@ -741,6 +751,23 @@ function handleExportCashFlowExcel() {
   exportCashFlowExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
+function handleExportSavingsRateExcel() {
+  exportSavingsRateExcelService(ultimoRisultato.value, mostraNotifica);
+}
+
+function handleExportIncomeExpenseExcel() {
+  exportIncomeExpenseExcelService(
+    ultimoRisultato.value,
+    formInputs.entrateRicorrenti.map(e => e.desc),
+    formInputs.usciteRicorrenti.map(u => u.desc),
+    mostraNotifica
+  );
+}
+
+function handleExportDebtsExcel() {
+  exportDebtsExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
+}
+
 // Lifecycle hook
 onMounted(() => {
   initializeDataService(
@@ -782,7 +809,10 @@ onMounted(() => {
       <AssetAllocation v-model="formInputs.assetAllocation" />
       <DebtSection v-model="formInputs.debiti" />
       <GoalSeek
-        v-model="formInputs"
+        :goalSeekTarget="formInputs.goalSeek.goalSeekTarget"
+        :goalSeekVariable="formInputs.goalSeek.goalSeekVariable"
+        @update:goalSeekTarget="formInputs.goalSeek.goalSeekTarget = $event"
+        @update:goalSeekVariable="formInputs.goalSeek.goalSeekVariable = $event"
         :goal-seek-options="goalSeekVariableOptions"
         @execute-goal-seek="handleExecuteGoalSeek"
       />
@@ -828,29 +858,41 @@ onMounted(() => {
 
       <tabs v-if="showDetailedTabs" :tabs="visibleTabs" :active-tab="activeTabName">
         <tab title="Panoramica">
-          <div
-            id="scenario-dashboard"
-            class="hidden card bg-pink-50 border-2 border-pink-200"
-          ></div>
-          <FireDashboard
-            :simMode="formInputs.simMode"
-            :numeroFIRE="numeroFIRE"
-            :datiFIRE="datiFIRE"
-            :formatterValuta="formatterValuta"
-            @view-details="handleViewDetails"
-          />
-          <StressTestDashboard
-            :stressTestResult="stressTestResult"
-            :formatterValuta="formatterValuta"
-          />
           <SuggestionsCard :suggestions="suggestions" />
         </tab>
         <tab title="Entrate/Uscite">
-          <IncomeExpenseChart
-            :simulationResults="ultimoRisultato"
-            :incomeCategories="formInputs.entrateRicorrenti.map((e) => e.desc)"
-            :expenseCategories="formInputs.usciteRicorrenti.map((u) => u.desc)"
-          />
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="card-title mb-0">Entrate e Uscite per Categoria</h3>
+              <button
+                @click="handleExportIncomeExpenseExcel()"
+                class="btn btn-secondary btn-sm"
+              >
+                Esporta in Excel
+              </button>
+            </div>
+            <IncomeExpenseChart
+              :simulationResults="ultimoRisultato"
+              :incomeCategories="formInputs.entrateRicorrenti.map((e) => e.desc)"
+              :expenseCategories="formInputs.usciteRicorrenti.map((u) => u.desc)"
+            />
+          </div>
+        </tab>
+        <tab title="Tasso di Risparmio">
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="card-title mb-0">Andamento del Tasso di Risparmio nel Tempo</h3>
+              <button
+                @click="handleExportSavingsRateExcel()"
+                class="btn btn-secondary btn-sm"
+              >
+                Esporta in Excel
+              </button>
+            </div>
+            <div class="relative h-96 md:h-[450px]">
+              <SavingsRateChart :simulationResults="ultimoRisultato" />
+            </div>
+          </div>
         </tab>
         <tab title="Patrimonio Netto">
           <NetWorthChart
@@ -906,7 +948,20 @@ onMounted(() => {
           </div>
         </tab>
         <tab title="Debiti">
-          <DebtWaterfallChart :simulationResults="ultimoRisultato" />
+          <div class="card">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="card-title mb-0">Andamento dei Debiti nel Tempo</h3>
+              <button
+                @click="handleExportDebtsExcel()"
+                class="btn btn-secondary btn-sm"
+              >
+                Esporta in Excel
+              </button>
+            </div>
+            <div class="relative h-96 md:h-[450px]">
+              <DebtChart :simulationResults="ultimoRisultato" :formInputs="formInputs" />
+            </div>
+          </div>
         </tab>
         <tab title="Impatto Fiscale">
           <TaxImpactChart :simulationResults="ultimoRisultato" />
@@ -966,3 +1021,4 @@ onMounted(() => {
 </template>
 
 <style></style>
+

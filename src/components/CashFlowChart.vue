@@ -9,26 +9,32 @@ const props = defineProps({
   },
 });
 
-const flussiChartIstanza = ref(null);
+const chartCanvas = ref(null);
+let chartInstance = null;
 
-function disegnaGraficoFlussi(risultati) {
-  const ctx = document.getElementById("flussiChart").getContext("2d");
-  if (flussiChartIstanza.value) {
-    flussiChartIstanza.value.destroy();
+const disegnaGraficoFlussi = (risultati) => {
+  if (!chartCanvas.value || !risultati || !Array.isArray(risultati) || risultati.some(r => !r.anno)) {
+    return; // Non disegnare se il canvas non è pronto o i dati non sono validi
   }
-  flussiChartIstanza.value = new Chart(ctx, {
+
+  const ctx = chartCanvas.value.getContext('2d');
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  chartInstance = new Chart(ctx, {
     type: "bar",
     data: {
-      labels: risultati && Array.isArray(risultati) ? risultati.map((r) => r.anno) : [],
+      labels: risultati.map((r) => r.anno),
       datasets: [
         {
           label: "Entrate Totali",
-          data: risultati && Array.isArray(risultati) ? risultati.map((r) => r.totaleEntrate) : [],
+          data: risultati.map((r) => r.totaleEntrate),
           backgroundColor: "#14b8a6",
         },
         {
           label: "Uscite Totali",
-          data: risultati && Array.isArray(risultati) ? risultati.map((r) => r.totaleUscite) : [],
+          data: risultati.map((r) => r.totaleUscite),
           backgroundColor: "#f43f5e",
         },
       ],
@@ -63,7 +69,7 @@ function disegnaGraficoFlussi(risultati) {
       },
     },
   });
-}
+};
 
 onMounted(() => {
   disegnaGraficoFlussi(props.risultati);
@@ -72,14 +78,11 @@ onMounted(() => {
 watch(() => props.risultati, (newRisultati) => {
   disegnaGraficoFlussi(newRisultati);
 }, { deep: true });
+
 </script>
 
 <template>
   <div class="relative h-96 md:h-[450px]">
-    <canvas id="flussiChart"></canvas>
+    <canvas ref="chartCanvas"></canvas>
   </div>
 </template>
-
-<style scoped>
-/* Stili specifici per CashFlowChart.vue */
-</style>

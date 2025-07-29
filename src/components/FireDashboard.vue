@@ -1,5 +1,15 @@
 <script setup>
 import { defineProps, computed, defineEmits } from 'vue';
+import NetWorthChart from './NetWorthChart.vue';
+import DebtChart from './DebtChart.vue';
+import TaxImpactChart from './TaxImpactChart.vue';
+import SavingsRateChart from './SavingsRateChart.vue';
+import { 
+  esportaPatrimonioNettoExcel, 
+  esportaDebitiExcel, 
+  esportaImpattoFiscaleExcel, 
+  esportaTassoRisparmioExcel 
+} from '../services/dataManagementService';
 
 const props = defineProps({
   simMode: {
@@ -16,6 +26,18 @@ const props = defineProps({
   },
   formatterValuta: {
     type: Object,
+    required: true,
+  },
+  simulationResults: {
+    type: Array,
+    required: true,
+  },
+  formInputs: {
+    type: Object,
+    required: true,
+  },
+  mostraNotifica: {
+    type: Function,
     required: true,
   },
 });
@@ -72,6 +94,25 @@ const emit = defineEmits(['view-details']);
       <button @click="emit('view-details')" class="btn btn-primary">
         Visualizza Dettagli Simulazione
       </button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+    <div class="card bg-white border-2 border-gray-200">
+      <NetWorthChart :simulationResults="simulationResults" />
+      <button @click="esportaPatrimonioNettoExcel(simulationResults, mostraNotifica)" class="btn btn-secondary mt-2">Esporta in Excel</button>
+    </div>
+    <div class="card bg-white border-2 border-gray-200">
+      <DebtChart :simulationResults="simulationResults" :formInputs="formInputs" />
+      <button @click="esportaDebitiExcel(simulationResults, formInputs, mostraNotifica)" class="btn btn-secondary mt-2">Esporta in Excel</button>
+    </div>
+    <div class="card bg-white border-2 border-gray-200">
+      <TaxImpactChart :simulationResults="simulationResults" />
+      <button @click="esportaImpattoFiscaleExcel(simulationResults, mostraNotifica)" class="btn btn-secondary mt-2">Esporta in Excel</button>
+    </div>
+    <div class="card bg-white border-2 border-gray-200">
+      <SavingsRateChart :simulationResults="simulationResults" />
+      <button @click="esportaTassoRisparmioExcel(simulationResults, mostraNotifica)" class="btn btn-secondary mt-2">Esporta in Excel</button>
     </div>
   </div>
 </template>

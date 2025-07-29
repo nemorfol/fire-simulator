@@ -248,7 +248,7 @@ export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) 
     if (metric === 'anno' || metric === 'eta') {
       continue;
     }
-    const sanitizedTitle = metric.replace(/[*?:/\[\]]/g, '');
+    const sanitizedTitle = metric.replace(/[*?:/\\\\[\\\\]]/g, '');
     const chartWorksheet = workbook.addWorksheet(`Grafico ${sanitizedTitle}`);
     const data = ultimoRisultato.map(r => ({ x: r.anno, y: r[metric] }));
     chartWorksheet.addRow(['Anno', metric]);
@@ -283,7 +283,7 @@ export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) 
       const imageDataUrl = chartInstance.toBase64Image();
       chartInstance.destroy();
       document.body.removeChild(offscreenCanvas);
-      const base64Data = imageDataUrl.replace(/^data:image\/png;base64,/, '');
+      const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
       const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
       chartWorksheet.addImage(imageId, { tl: { col: 4, row: 1 }, br: { col: 13, row: 20 } });
     }
@@ -321,7 +321,7 @@ export async function esportaExcel(ultimoRisultato, formInputs, mostraNotifica) 
     const mainImageDataUrl = mainChartInstance.toBase64Image();
     mainChartInstance.destroy();
     document.body.removeChild(mainCanvas);
-    const mainBase64Data = mainImageDataUrl.replace(/^data:image\/png;base64,/, '');
+    const mainBase64Data = mainImageDataUrl.replace('data:image/png;base64,', '');
     const mainImageId = workbook.addImage({ base64: mainBase64Data, extension: 'png' });
     const startCol = finalHeaders.length + 2;
     worksheet.addImage(mainImageId, { tl: { col: startCol, row: 1 }, br: { col: startCol + 12, row: 25 } });
@@ -425,7 +425,7 @@ export async function esportaCapitaleExcel(ultimoRisultato, formInputs, monteCar
     const imageDataUrl = chartInstance.toBase64Image();
     chartInstance.destroy();
     document.body.removeChild(offscreenCanvas);
-    const base64Data = imageDataUrl.replace(/^data:image\/png;base64,/, '');
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
     const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
     const startCol = data_headers.length + 1;
     worksheet.addImage(imageId, {
@@ -522,7 +522,7 @@ export async function esportaFlussiExcel(ultimoRisultato, formInputs, mostraNoti
     const imageDataUrl = chartInstance.toBase64Image();
     chartInstance.destroy();
     document.body.removeChild(offscreenCanvas);
-    const base64Data = imageDataUrl.replace(/^data:image\/png;base64,/, '');
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
     const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
     const startCol = headers.length + 1;
     worksheet.addImage(imageId, {
@@ -541,6 +541,186 @@ export async function esportaFlussiExcel(ultimoRisultato, formInputs, mostraNoti
   });
 }
 
+export async function esportaTassoRisparmioExcel(ultimoRisultato, mostraNotifica) {
+  if (!ultimoRisultato || ultimoRisultato.length === 0) {
+    mostraNotifica(
+      "Nessun Dato",
+      "Esegui una simulazione prima di esportare i dati del tasso di risparmio.",
+      false
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Tasso di Risparmio");
+  const dataToExport = ultimoRisultato.map((r) => ({
+    Anno: r.anno,
+    "Tasso di Risparmio (%)": r.tassoRisparmio,
+  }));
+
+  const headers = Object.keys(dataToExport[0]);
+  worksheet.addRow(headers);
+  dataToExport.forEach(row => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  const years = ultimoRisultato.map(r => r.anno);
+  const tassoRisparmioData = ultimoRisultato.map(r => r.tassoRisparmio);
+
+  const configuration = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Tasso di Risparmio',
+          data: tassoRisparmioData,
+          borderColor: '#4CAF50',
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          fill: true,
+          tension: 0.2,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Andamento del Tasso di Risparmio nel Tempo',
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: 'Anno' } },
+        y: { title: { display: true, text: 'Tasso di Risparmio (%)' } },
+      },
+    },
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  offscreenCanvas.style.display = 'none';
+  document.body.appendChild(offscreenCanvas);
+  const ctx = offscreenCanvas.getContext('2d');
+
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
+    const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
+    const startCol = headers.length + 1;
+    worksheet.addImage(imageId, {
+        tl: { col: startCol, row: 1 },
+        br: { col: startCol + 9, row: 20 }
+    });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "tasso_di_risparmio.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+}
+
+export async function esportaEntrateUsciteExcel(ultimoRisultato, incomeCategories, expenseCategories, mostraNotifica) {
+  if (!ultimoRisultato || ultimoRisultato.length === 0) {
+    mostraNotifica(
+      "Nessun Dato",
+      "Esegui una simulazione prima di esportare i dati di entrate e uscite.",
+      false
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Entrate e Uscite");
+
+  // Headers
+  const headers = ['Anno', ...incomeCategories, ...expenseCategories];
+  worksheet.addRow(headers);
+
+  // Data
+  ultimoRisultato.forEach(row => {
+    const rowData = [row.anno];
+    incomeCategories.forEach(cat => rowData.push(row[cat] || 0));
+    expenseCategories.forEach(cat => rowData.push(row[cat] || 0));
+    worksheet.addRow(rowData);
+  });
+
+  // Chart
+  const years = ultimoRisultato.map(r => r.anno);
+  const incomeColors = ['#4CAF50', '#81C784', '#A5D6A7', '#C8E6C9'];
+  const expenseColors = ['#F44336', '#E57373', '#EF9A9A', '#FFCDD2'];
+
+  const incomeDatasets = incomeCategories.map((category, index) => ({
+    label: category,
+    data: ultimoRisultato.map(r => r[category] || 0),
+    backgroundColor: incomeColors[index % incomeColors.length],
+    stack: 'income'
+  }));
+
+  const expenseDatasets = expenseCategories.map((category, index) => ({
+    label: category,
+    data: ultimoRisultato.map(r => (r[category] || 0)),
+    backgroundColor: expenseColors[index % expenseColors.length],
+    stack: 'expense'
+  }));
+
+  const configuration = {
+    type: 'bar',
+    data: {
+      labels: years,
+      datasets: [...incomeDatasets, ...expenseDatasets],
+    },
+    options: {
+      plugins: {
+        title: { display: true, text: 'Entrate e Uscite per Categoria' },
+      },
+      scales: {
+        x: { stacked: true, title: { display: true, text: 'Anno' } },
+        y: { stacked: true, title: { display: true, text: 'Importo (€)' } },
+      },
+    },
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  offscreenCanvas.style.display = 'none';
+  document.body.appendChild(offscreenCanvas);
+  const ctx = offscreenCanvas.getContext('2d');
+
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
+    const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
+    worksheet.addImage(imageId, {
+        tl: { col: headers.length + 1, row: 1 },
+        br: { col: headers.length + 10, row: 25 }
+    });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "entrate_uscite.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+}
+
+
 export function salvaConfronto(scenarioA, ultimoRisultato, formInputs, saveScenarioBtnDisabled, resetScenarioBtnHidden, mostraNotifica) {
   scenarioA.value = {
     risultati: ultimoRisultato.value,
@@ -556,4 +736,341 @@ export function resetConfronto(scenarioA, saveScenarioBtnDisabled, resetScenario
   saveScenarioBtnDisabled.value = false;
   resetScenarioBtnHidden.value = true;
   mostraNotifica("Scenario Resettato", "Lo Scenario A è stato resettato.");
+}
+
+export async function esportaPatrimonioNettoExcel(ultimoRisultato, mostraNotifica) {
+  if (!ultimoRisultato || ultimoRisultato.length === 0) {
+    mostraNotifica(
+      "Nessun Dato",
+      "Esegui una simulazione prima di esportare i dati del patrimonio netto.",
+      false
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Patrimonio Netto");
+  const dataToExport = ultimoRisultato.map((r) => ({
+    Anno: r.anno,
+    "Patrimonio Netto (€)": r.capitaleFinale,
+  }));
+
+  const headers = Object.keys(dataToExport[0]);
+  worksheet.addRow(headers);
+  dataToExport.forEach(row => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  const years = ultimoRisultato.map(r => r.anno);
+  const netWorthData = ultimoRisultato.map(r => r.capitaleFinale);
+
+  const configuration = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Patrimonio Netto',
+          data: netWorthData,
+          borderColor: '#2196F3',
+          backgroundColor: 'rgba(33, 150, 243, 0.2)',
+          fill: true,
+          tension: 0.1,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Andamento del Patrimonio Netto nel Tempo',
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: 'Anno' } },
+        y: { title: { display: true, text: 'Patrimonio Netto (€)' } },
+      },
+    },
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  offscreenCanvas.style.display = 'none';
+  document.body.appendChild(offscreenCanvas);
+  const ctx = offscreenCanvas.getContext('2d');
+
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
+    const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
+    const startCol = headers.length + 1;
+    worksheet.addImage(imageId, {
+        tl: { col: startCol, row: 1 },
+        br: { col: startCol + 9, row: 20 }
+    });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "patrimonio_netto.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+}
+
+export async function esportaDebitiExcel(ultimoRisultato, formInputs, mostraNotifica) {
+  if (!ultimoRisultato || ultimoRisultato.length === 0) {
+    mostraNotifica(
+      "Nessun Dato",
+      "Esegui una simulazione prima di esportare i dati dei debiti.",
+      false
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Debiti");
+  
+  const headers = ['Anno'];
+  formInputs.debiti.forEach(d => headers.push(`Capitale Residuo ${d.desc}`));
+  worksheet.addRow(headers);
+
+  ultimoRisultato.forEach(r => {
+    const row = [r.anno];
+    formInputs.debiti.forEach(d => {
+      row.push(r[`Capitale Residuo ${d.desc}`] || 0);
+    });
+    worksheet.addRow(row);
+  });
+
+  const years = ultimoRisultato.map(r => r.anno);
+  const datasets = formInputs.debiti.map((d, index) => {
+    const color = `hsl(${(index * 137.5) % 360}, 70%, 50%)`;
+    return {
+      label: `Capitale Residuo ${d.desc}`,
+      data: ultimoRisultato.map(r => r[`Capitale Residuo ${d.desc}`] || 0),
+      borderColor: color,
+      backgroundColor: `${color}33`, // 20% opacity
+      fill: true,
+      tension: 0.1,
+    };
+  });
+
+  const configuration = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: datasets,
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Andamento dei Debiti nel Tempo',
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: 'Anno' } },
+        y: { title: { display: true, text: 'Capitale Residuo (€)' } },
+      },
+    },
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  offscreenCanvas.style.display = 'none';
+  document.body.appendChild(offscreenCanvas);
+  const ctx = offscreenCanvas.getContext('2d');
+
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
+    const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
+    const startCol = headers.length + 1;
+    worksheet.addImage(imageId, {
+        tl: { col: startCol, row: 1 },
+        br: { col: startCol + 9, row: 20 }
+    });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "andamento_debiti.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+}
+
+export async function esportaImpattoFiscaleExcel(ultimoRisultato, mostraNotifica) {
+  if (!ultimoRisultato || ultimoRisultato.length === 0) {
+    mostraNotifica(
+      "Nessun Dato",
+      "Esegui una simulazione prima di esportare i dati sull'impatto fiscale.",
+      false
+    );
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet("Impatto Fiscale");
+  const dataToExport = ultimoRisultato.map((r) => ({
+    Anno: r.anno,
+    "Imposta sul Reddito (€)": r.impostaReddito,
+    "Imposta sulle Rendite (€)": r.impostaRendite,
+  }));
+
+  const headers = Object.keys(dataToExport[0]);
+  worksheet.addRow(headers);
+  dataToExport.forEach(row => {
+    worksheet.addRow(Object.values(row));
+  });
+
+  const years = ultimoRisultato.map(r => r.anno);
+  const impostaRedditoData = ultimoRisultato.map(r => r.impostaReddito);
+  const impostaRenditeData = ultimoRisultato.map(r => r.impostaRendite);
+
+  const configuration = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        {
+          label: 'Imposta sul Reddito',
+          data: impostaRedditoData,
+          borderColor: '#FF6384',
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          fill: true,
+          tension: 0.1,
+        },
+        {
+          label: 'Imposta sulle Rendite',
+          data: impostaRenditeData,
+          borderColor: '#36A2EB',
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          fill: true,
+          tension: 0.1,
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        title: {
+          display: true,
+          text: 'Andamento dell\'Impatto Fiscale nel Tempo',
+        },
+      },
+      scales: {
+        x: { title: { display: true, text: 'Anno' } },
+        y: { title: { display: true, text: 'Importo Tasse (€)' } },
+      },
+    },
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  offscreenCanvas.style.display = 'none';
+  document.body.appendChild(offscreenCanvas);
+  const ctx = offscreenCanvas.getContext('2d');
+
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const base64Data = imageDataUrl.replace('data:image/png;base64,', '');
+    const imageId = workbook.addImage({ base64: base64Data, extension: 'png' });
+    const startCol = headers.length + 1;
+    worksheet.addImage(imageId, {
+        tl: { col: startCol, row: 1 },
+        br: { col: startCol + 9, row: 20 }
+    });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "impatto_fiscale.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+}
+
+export async function esportaMonteCarloExcel(monteCarloSummary, mostraNotifica) {
+  if (!monteCarloSummary || !monteCarloSummary.percentiles) {
+    mostraNotifica("Nessun Dato", "Esegui una simulazione Monte Carlo prima di esportare.", false);
+    return;
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  const dataWorksheet = workbook.addWorksheet("Dati Monte Carlo");
+
+  const { years, p10, p25, p50, p75, p90 } = monteCarloSummary.percentiles;
+
+  const headers = ["Anno", "10° percentile", "25° percentile", "Mediana (50°)", "75° percentile", "90° percentile"];
+  dataWorksheet.addRow(headers);
+  years.forEach((year, i) => {
+    dataWorksheet.addRow([year, p10[i], p25[i], p50[i], p75[i], p90[i]]);
+  });
+
+  const chartWorksheet = workbook.addWorksheet("Grafico Monte Carlo");
+  const configuration = {
+    type: 'line',
+    data: {
+      labels: years,
+      datasets: [
+        { label: 'Mediana (P50)', data: p50, borderColor: '#0d9488', borderWidth: 2.5, pointRadius: 0 },
+        { label: 'Range 25-75', data: p75, fill: '+1', backgroundColor: 'rgba(13, 148, 136, 0.2)', pointRadius: 0 },
+        { label: 'P25', data: p25, fill: false, pointRadius: 0, borderColor: 'rgba(13, 148, 136, 0.2)' },
+        { label: 'Range 10-90', data: p90, fill: '+1', backgroundColor: 'rgba(13, 148, 136, 0.1)', pointRadius: 0 },
+        { label: 'P10', data: p10, fill: false, pointRadius: 0, borderColor: 'rgba(13, 148, 136, 0.1)' }
+      ]
+    },
+    options: {
+      plugins: { title: { display: true, text: 'Distribuzione Risultati Monte Carlo' } },
+      scales: { x: { title: { display: true, text: 'Anno' } }, y: { title: { display: true, text: 'Capitale' } } }
+    }
+  };
+
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = 1200;
+  offscreenCanvas.height = 600;
+  document.body.appendChild(offscreenCanvas);
+
+  const ctx = offscreenCanvas.getContext('2d');
+  if (ctx) {
+    const chartInstance = new Chart(ctx, configuration);
+    await new Promise(resolve => { chartInstance.update(); setTimeout(() => { resolve(); }, 200); });
+    const imageDataUrl = chartInstance.toBase64Image();
+    chartInstance.destroy();
+    document.body.removeChild(offscreenCanvas);
+    const imageId = workbook.addImage({ base64: imageDataUrl.replace('data:image/png;base64,', ''), extension: 'png' });
+    chartWorksheet.addImage(imageId, { tl: { col: 1, row: 1 }, br: { col: 16, row: 30 } });
+  }
+
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = "risultati_monte_carlo.xlsx";
+    link.click();
+    URL.revokeObjectURL(link.href);
+    mostraNotifica("Esportazione Completata", "I risultati della simulazione Monte Carlo sono stati esportati.");
+  });
 }

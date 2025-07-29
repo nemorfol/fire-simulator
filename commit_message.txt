@@ -1,7 +1,16 @@
-feat: Miglioramenti al grafico di Sankey e pulizia console
+feat: Miglioramenti alla tabella Dettaglio Annuale e correzioni grafici
 
-- Implementato grafico di Sankey dettagliato con Plotly.js, mostrando singole voci di entrate/uscite.
-- Aggiornata la guida utente (public/guide.html) per riflettere le nuove funzionalità del grafico di Sankey e la visualizzazione delle righe rosse.
-- Ripristinati i console.warn in src/components/CapitalChart.vue.
-- Rimossi i console.log da src/services/simulationService.js per migliorare le performance.
-- Eliminati file obsoleti (src/indexold.html, src/parametri.jpg).
+Questo commit introduce i seguenti miglioramenti e correzioni:
+
+- **Tabella Dettaglio Annuale:**
+  - Aggiunte nuove metriche: Capitale Iniziale Reale, Capitale Finale Reale, Tasso di Prelievo (%), Variazione Percentuale Capitale (%).
+  - Implementato ordinamento delle colonne cliccando sull'intestazione.
+  - Aggiunta funzionalità di ricerca/filtro nella tabella.
+  - Corretto il disallineamento tra intestazione e dati della tabella.
+  - Ripristinata la visualizzazione delle righe rosse per capitale esaurito/negativo.
+
+- **Grafico Andamento Capitale:**
+  - Corretta la visualizzazione dei dati per la modalità Monte Carlo.
+
+- **Grafico Flussi di Cassa:**
+  - Corretto il calcolo delle uscite totali in `simulationService.js` per includere correttamente le uscite una tantum.
