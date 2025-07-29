@@ -384,6 +384,10 @@ export function calcolaProiezione(
     risultatoAnno.capitaleFinale = capitaleFinale;
     risultatoAnno.capitalePerConto = { ...capitalePerConto };
 
+    // Calcolo del patrimonio netto
+    const totaleCapitaleResiduoDebiti = debitiAttivi.reduce((sum, debito) => sum + debito.capitaleResiduo, 0);
+    risultatoAnno.patrimonioNetto = capitaleFinale - totaleCapitaleResiduoDebiti;
+
     // Calcolo del capitale finale in termini reali
     risultatoAnno.capitaleFinaleReale = capitaleFinale / inflationFactor;
 

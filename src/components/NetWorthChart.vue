@@ -22,7 +22,7 @@ const drawChart = () => {
   if (!netWorthChartCanvas.value) return;
 
   const labels = props.simulationResults.map(r => r.anno);
-  const data = props.simulationResults.map(r => r.capitaleFinale);
+  const data = props.simulationResults.map(r => r.patrimonioNetto);
 
   const chartData = {
     labels: labels,

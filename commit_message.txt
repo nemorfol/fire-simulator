@@ -1,10 +1,7 @@
-fix: Correzione bug critici e miglioramenti UI
+feat: Aggiunta calcolo speranza di vita e miglioramenti simulazione
 
-Questo commit risolve una serie di bug critici che causavano crash e comportamenti inaspettati, in particolare nelle funzioni di "Goal Seek" e nella visualizzazione dei grafici.
-
-Le principali modifiche includono:
-- Corretta la gestione dello stato nel componente GoalSeek per prevenire la perdita di dati e loop infiniti.
-- Risolti errori di riferimento e di tipo nei servizi di simulazione e goal seek.
-- Riorganizzata l'interfaccia dei risultati per una maggiore chiarezza, separando i risultati per tipo di simulazione.
-- Ingrandito il grafico dello "Scenario Peggiore" per una migliore leggibilità.
-- Aggiornata la guida utente per riflettere le modifiche recenti.
+- Aggiunta la funzionalità per calcolare la speranza di vita basandosi sui dati ISTAT.
+- L'età massima di simulazione ora si basa sulla speranza di vita calcolata.
+- Migliorata la logica di calcolo del Numero FIRE per tenere conto dell'inflazione.
+- Resi più chiari e contestuali i messaggi di risultato della simulazione.
+- Aggiornata la guida utente per riflettere le nuove funzionalità.
