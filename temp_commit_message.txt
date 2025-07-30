@@ -1,6 +1,5 @@
-feat(pension): implementa stima fondo pensione e aggiorna guida
+feat(pension): aggiorna automaticamente il coefficiente di conversione
 
-- Aggiunta la funzionalità di stima della rendita del fondo pensione, inclusa la possibilità di calcolare la rendita netta in base ai contributi non dedotti.
-- La rendita stimata viene aggiunta automaticamente alle entrate ricorrenti della simulazione.
-- Aggiornato il componente PensionEstimator per gestire i nuovi input e visualizzare la rendita netta.
-- Aggiornata la guida utente per includere la nuova funzionalità.
+- Aggiunta una tabella di coefficienti di conversione standard per i fondi pensione in pensionService.js.
+- Implementata una funzione getFundConversionCoefficient per recuperare il coefficiente in base all'età.
+- Aggiunto un watch in App.vue che aggiorna automaticamente il campo del coefficiente di conversione quando l'utente modifica l'età di ritiro.
