@@ -1,5 +1,6 @@
-fix: Distinzione tra Patrimonio Netto e Capitale
+feat: Aggiunta e correzione del piano finanziario guidato
 
-- Corretto il calcolo del Patrimonio Netto in `simulationService.js` per includere i debiti.
-- Aggiornato `NetWorthChart.vue` per visualizzare correttamente il Patrimonio Netto.
-- Ora i grafici "Andamento Patrimonio Netto" e "Andamento Capitale" mostrano dati distinti e corretti.
+Aggiunto un nuovo componente `FinancialPlan.vue` che genera una guida passo-passo per l'utente basata sulla sua situazione finanziaria.
+Corretta la logica di navigazione per i pulsanti di azione nel piano, assicurando che lo scroll e il cambio di tab funzionino correttamente.
+Migliorato il calcolo della liquidità attuale per basarsi sull'asset allocation dell'utente invece di una stima fissa.
+Corretti vari bug minori e migliorata la stabilità generale.

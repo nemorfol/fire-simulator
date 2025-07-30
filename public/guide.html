@@ -21,6 +21,151 @@
         .usage-tip { background-color: #ecf0f1; border-left: 5px solid #3498db; padding: 10px 15px; margin-top: 15px; margin-bottom: 15px; }
         .usage-tip strong { color: #2c3e50; }
 
+        /* Stili per le schede di rappresentazione visuale */
+        .visual-screenshot {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .visual-screenshot h4 {
+            font-size: 1.2em;
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ced4da;
+            padding-bottom: 10px;
+        }
+        /* Stili per i form */
+        .visual-screenshot .field {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .visual-screenshot .field label {
+            font-weight: bold;
+            color: #495057;
+            margin-right: 10px;
+            flex-basis: 200px;
+            flex-shrink: 0;
+        }
+        .visual-screenshot .field .value {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #e83e8c;
+            flex-grow: 1;
+        }
+        /* Stili per i grafici finti */
+        .chart-placeholder {
+            width: 100%;
+            height: 200px;
+            background: repeating-linear-gradient(0deg, #e9ecef, #e9ecef 1px, #f8f9fa 1px, #f8f9fa 20px);
+            border: 1px solid #dee2e6;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+        }
+        .chart-placeholder .bar {
+            background-color: #3498db;
+            width: 25px;
+            opacity: 0.7;
+            animation: rise 1s ease-out;
+        }
+        .chart-placeholder .line {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            top: 10px;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 50 C 25 20, 75 80, 100 50' stroke='%23e74c3c' fill='none' stroke-width='4'/%3E%3C/svg%3E");
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+        /* Stili per le tabelle finte */
+        .table-placeholder {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-placeholder th, .table-placeholder td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        .table-placeholder th {
+            background-color: #e9ecef;
+        }
+        .sankey-placeholder {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 150px;
+        }
+        .sankey-node {
+            background-color: #34495e;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .sankey-link {
+            flex-grow: 1;
+            height: 10px;
+            background-color: #3498db;
+            opacity: 0.6;
+            margin: 0 -1px;
+        }
+        @keyframes rise {
+            from { height: 0; }
+        }
+
+        /* Stili per le schede dei form */
+        .form-screenshot {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .form-screenshot h4 {
+            font-size: 1.2em;
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #ced4da;
+            padding-bottom: 10px;
+        }
+        .form-screenshot .field {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+        .form-screenshot .field label {
+            font-weight: bold;
+            color: #495057;
+            margin-right: 10px;
+            flex-basis: 200px;
+        }
+        .form-screenshot .field .value {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            padding: 5px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #e83e8c;
+            flex-grow: 1;
+        }
+
         /* Stili per l'indice */
         .index-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 15px; }
         .index-list { list-style-type: none; padding: 0; }
@@ -39,17 +184,40 @@
                 <li>
                     <a href="#parametri">2. Sezione Parametri: Inserimento dei Dati</a>
                     <ul>
-                        <li><a href="#impostazioni-generali">2.1 Impostazioni Generali</a></li>
-                        <li><a href="#strategie-prelievo">2.2 Strategie di Prelievo</a></li>
-                        <li><a href="#entrate-uscite">2.3 Entrate e Uscite</a></li>
-                        <li><a href="#asset-allocation">2.4 Asset Allocation</a></li>
-                        <li><a href="#debiti">2.5 Debiti</a></li>
+                        <li><a href="#gestione-json">2.1 Gestione Dati JSON</a></li>
+                        <li><a href="#impostazioni-simulazione">2.2 Impostazioni di Simulazione</a></li>
+                        <li><a href="#stima-pensione">2.3 Stima Pensione</a></li>
+                        <li><a href="#scaglioni-fiscali">2.4 Scaglioni Fiscali</a></li>
+                        <li><a href="#asset-allocation">2.5 Asset Allocation</a></li>
+                        <li><a href="#debiti">2.6 Debiti</a></li>
+                        <li><a href="#goal-seek-param">2.7 Goal Seek</a></li>
+                        <li><a href="#ottimizzazione">2.8 Ottimizzazione</a></li>
+                        <li><a href="#gestione-scenari">2.9 Gestione Scenari</a></li>
+                        <li><a href="#entrate-uscite">2.10 Entrate e Uscite</a></li>
                     </ul>
                 </li>
                 <li><a href="#tipi-simulazione">3. Tipi di Simulazione</a></li>
-                <li><a href="#risultati-simulazione">4. Risultati della Simulazione</a></li>
+                <li>
+                    <a href="#risultati-simulazione">4. Risultati della Simulazione</a>
+                    <ul>
+                        <li><a href="#risultati-panoramica">4.1 Panoramica</a></li>
+                        <li><a href="#risultati-piano">4.2 Piano Finanziario</a></li>
+                        <li><a href="#risultati-entrate-uscite">4.3 Entrate/Uscite</a></li>
+                        <li><a href="#risultati-risparmio">4.4 Tasso di Risparmio</a></li>
+                        <li><a href="#risultati-patrimonio">4.5 Patrimonio Netto</a></li>
+                        <li><a href="#risultati-capitale">4.6 Andamento Capitale</a></li>
+                        <li><a href="#risultati-flussi">4.7 Flussi di Cassa</a></li>
+                        <li><a href="#risultati-debiti">4.8 Debiti</a></li>
+                        <li><a href="#risultati-fiscale">4.9 Impatto Fiscale</a></li>
+                        <li><a href="#risultati-benchmark">4.10 Benchmark</a></li>
+                        <li><a href="#risultati-dettaglio">4.11 Dettaglio Annuale</a></li>
+                        <li><a href="#risultati-montecarlo">4.12 Monte Carlo</a></li>
+                    </ul>
+                </li>
                 <li><a href="#goal-seek">5. Goal Seek</a></li>
-                <li><a href="#gestione-dati">6. Gestione Dati</a></li>
+                <li><a href="#piano-finanziario">6. Piano Finanziario Guidato</a></li>
+                <li><a href="#gestione-dati">7. Gestione Dati</a></li>
+                <li><a href="#screenshot-form">8. Panoramica dei Moduli</a></li>
             </ul>
         </div>
 
@@ -70,37 +238,134 @@
             </ul>
 
             <h2 id="parametri">2. Sezione Parametri: Inserimento dei Dati</h2>
-            <p>Questa sezione è il cuore del simulatore. La precisione dei risultati dipende dalla completezza e accuratezza dei dati inseriti.</p>
+            <p class="section-intro">Questa è la sezione più importante. Dati precisi portano a risultati precisi. La sezione è organizzata in pannelli espandibili per facilitare l'inserimento.</p>
 
-            <h3 id="impostazioni-generali">2.1 Impostazioni Generali</h3>
+            <h3 id="gestione-json">2.1 Gestione Dati JSON</h3>
+            <p>All'inizio della sezione parametri, trovi i pulsanti per <strong>importare ed esportare l'intera configurazione</strong> della simulazione in un file JSON. Questo ti permette di salvare il tuo lavoro e ricaricarlo in seguito.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Gestione Dati JSON</h4>
+                <div style="display: flex; justify-content: space-around; padding: 10px;">
+                    <button style="background-color: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Importa JSON</button>
+                    <button style="background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Esporta JSON</button>
+                </div>
+            </div>
+
+            <h3 id="impostazioni-simulazione">2.2 Impostazioni di Simulazione</h3>
+            <p>Questo pannello contiene i parametri fondamentali che governano il modello di simulazione.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Impostazioni di Simulazione</h4>
+                <div class="field"><label>Modalità Simulazione:</label><span class="value">Deterministica</span></div>
+                <div class="field"><label>Età Iniziale:</label><span class="value">30</span></div>
+                <div class="field"><label>Capitale Iniziale (€):</label><span class="value">50000</span></div>
+                <div class="field"><label>Età di Ritiro:</label><span class="value">65</span></div>
+                <div class="field"><label>Strategia di Prelievo:</label><span class="value">Regola FIRE (Fisso)</span></div>
+            </div>
             <ul>
-                <li><strong>Età Iniziale:</strong> La tua età attuale.</li>
-                <li><strong>Capitale Iniziale:</strong> Il valore totale del tuo patrimonio netto.</li>
-                <li><strong>Tasso Inflazione Annuo:</strong> L'inflazione media annua che prevedi.</li>
-                <li><strong>Regola FIRE (%):</strong> La percentuale di prelievo annuale desiderata in fase di ritiro.</li>
-                <li><strong>Tassazione Rendite (%):</strong> La tassazione applicata ai rendimenti degli investimenti.</li>
-                <li><strong>Età di Ritiro:</strong> L'età in cui prevedi di smettere di lavorare.</li>
-                <li><strong>Età Massima Simulazione:</strong> L'orizzonte temporale della simulazione. Puoi calcolarla automaticamente in base alla tua speranza di vita (dati ISTAT) o impostarla manualmente.</li>
-                <li><strong>Calcola da ISTAT:</strong> Un pulsante che, in base a età e sesso, calcola la tua speranza di vita e imposta automaticamente l'età massima della simulazione.</li>
+                <li><strong>Modalità di Simulazione:</strong> Scegli tra <strong>Deterministica</strong> (una singola proiezione basata sui rendimenti medi attesi) e <strong>Monte Carlo</strong> (migliaia di proiezioni basate su rendimenti e volatilità per calcolare le probabilità di successo).</li>
+                <li><strong>Dati Anagrafici e Capitale:</strong> Inserisci la tua <strong>età attuale</strong>, il <strong>capitale di partenza</strong> e l'<strong>età di ritiro</strong> desiderata.</li>
+                <li><strong>Parametri Economici:</strong> Imposta il <strong>tasso di inflazione</strong> medio annuo previsto e la <strong>tassazione sulle rendite</strong> finanziarie.</li>
+                <li><strong>Età Massima Simulazione:</strong> L'orizzonte temporale della simulazione. Puoi impostarla manualmente o usare il pulsante <strong>Calcola Speranza di Vita</strong> per ottenere un valore basato sui dati ISTAT più recenti.</li>
+                <li><strong>Strategia di Prelievo in Ritiro:</strong> Scegli come preleverai i fondi durante la pensione. Opzioni includono la famosa <strong>Regola del 4%</strong>, una <strong>Percentuale Costante</strong> del portafoglio, o strategie più dinamiche come <strong>VPW</strong> e <strong>Guardrails</strong>.</li>
+                <li><strong>Scenario di Crisi:</strong> Puoi includere uno shock di mercato iniziale nella tua simulazione (es. un crollo del 30%) per testare la resilienza del tuo piano.</li>
             </ul>
 
-            <h3 id="strategie-prelievo">2.2 Strategie di Prelievo</h3>
-            <p>Puoi scegliere come prelevare i fondi durante la pensione:</p>
+            <h3 id="stima-pensione">2.3 Stima Pensione</h3>
+            <p>Uno strumento potente per integrare la previdenza pubblica nel tuo piano. Inserendo il tuo stipendio lordo, l'anno di inizio contribuzione e la crescita salariale attesa, il simulatore calcolerà una <strong>stima della tua pensione pubblica</strong> e la aggiungerà automaticamente alle tue entrate ricorrenti a partire dall'età di ritiro.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Stima Pensione</h4>
+                <div class="field"><label>Reddito Annuo Lordo (€):</label><span class="value">35000</span></div>
+                <div class="field"><label>Anno Inizio Contribuzione:</label><span class="value">2010</span></div>
+                <div class="field"><label>Crescita Annua Stipendio (%):</label><span class="value">1.5</span></div>
+            </div>
+
+            <h3 id="scaglioni-fiscali">2.4 Scaglioni Fiscali</h3>
+            <p>Per un calcolo delle tasse più preciso, puoi definire qui gli <strong>scaglioni IRPEF</strong> e le relative aliquote.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Scaglioni Fiscali</h4>
+                <table class="table-placeholder">
+                    <thead><tr><th>Reddito Fino a (€)</th><th>Aliquota (%)</th></tr></thead>
+                    <tbody>
+                        <tr><td>28000</td><td>23</td></tr>
+                        <tr><td>50000</td><td>35</td></tr>
+                        <tr><td>Infinito</td><td>43</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="asset-allocation">2.5 Asset Allocation</h3>
+            <p>Definisci la composizione del tuo portafoglio di investimenti. Per ogni asset (es. Azioni, Obbligazioni, Liquidità), specifica:</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Asset Allocation</h4>
+                <table class="table-placeholder">
+                    <thead><tr><th>Nome Asset</th><th>Quota (%)</th><th>Rendimento (%)</th><th>Dev. Std. (%)</th></tr></thead>
+                    <tbody>
+                        <tr><td>Azioni Globali</td><td>60</td><td>8.0</td><td>15.0</td></tr>
+                        <tr><td>Obbligazioni</td><td>30</td><td>3.5</td><td>5.0</td></tr>
+                        <tr><td>Liquidità</td><td>10</td><td>1.0</td><td>0.5</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <ul>
-                <li><strong>Regola FIRE (Fisso):</strong> Preleva un importo fisso annuale, aggiustato per l'inflazione.</li>
-                <li><strong>Percentuale Costante:</strong> Preleva una percentuale fissa del capitale rimanente ogni anno.</li>
-                <li><strong>VPW (Variable Percentage Withdrawal):</strong> Un metodo dinamico che adatta il prelievo all'età e alla speranza di vita.</li>
-                <li><strong>Guardrails:</strong> Una strategia che aggiusta il prelievo in base a soglie di capitale predefinite, per proteggerti durante i ribassi di mercato e permetterti di spendere di più durante i rialzi.</li>
+                <li><strong>Quota (%):</strong> La percentuale che questo asset rappresenta sul totale del portafoglio.</li>
+                <li><strong>Rendimento Atteso (%):</strong> Il rendimento annuo che ti aspetti da questo asset.</li>
+                <li><strong>Deviazione Standard (%):</strong> La sua volatilità, un parametro cruciale per le simulazioni Monte Carlo.</li>
             </ul>
+            <div class="usage-tip"><p><strong>Importante:</strong> La somma delle quote di tutti gli asset deve fare esattamente 100%. Il calcolo della <strong>Liquidità Attuale</strong> nel "Piano Finanziario Guidato" si basa sulla quota degli asset che includono la parola "Liquidità" nel nome.</p></div>
 
-            <h3 id="entrate-uscite">2.3 Entrate e Uscite</h3>
-            <p>Dettaglia le tue fonti di reddito e le tue spese, sia ricorrenti che una tantum.</p>
+            <h3 id="debiti">2.6 Debiti</h3>
+            <p>Elenca qui i tuoi debiti (es. mutui, prestiti). Il simulatore ne terrà conto per calcolare il tuo patrimonio netto e i flussi di cassa, proiettando l'estinzione del debito nel tempo.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Gestione Debiti</h4>
+                <div class="field"><label>Descrizione:</label><span class="value">Mutuo Casa</span></div>
+                <div class="field"><label>Importo Iniziale (€):</label><span class="value">150000</span></div>
+                <div class="field"><label>Tasso Interesse (%):</label><span class="value">2.5</span></div>
+                <div class="field"><label>Durata (Anni):</label><span class="value">25</span></div>
+            </div>
 
-            <h3 id="asset-allocation">2.4 Asset Allocation</h3>
-            <p>Definisci la composizione del tuo portafoglio, specificando rendimento atteso e deviazione standard per ogni asset.</p>
+            <h3 id="goal-seek-param">2.7 Goal Seek</h3>
+            <p>Questa funzione ti aiuta a rispondere a domande come: "Di quanto devo aumentare il mio stipendio per andare in pensione a 60 anni?". Imposta un obiettivo e scegli una variabile: il simulatore farà i calcoli per te.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Goal Seek</h4>
+                <div class="field"><label>Obiettivo:</label><span class="value">Raggiungere Età di Ritiro a 60 anni</span></div>
+                <div class="field"><label>Variabile da Modificare:</label><span class="value">Aumenta entrata: Stipendio</span></div>
+                <div style="text-align: center; margin-top: 15px;"><button style="background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Esegui Goal Seek</button></div>
+            </div>
 
-            <h3 id="debiti">2.5 Debiti</h3>
-            <p>Inserisci i dettagli dei tuoi debiti per una proiezione finanziaria completa.</p>
+            <h3 id="ottimizzazione">2.8 Ottimizzazione</h3>
+            <p>Se il tuo piano non è sostenibile, questo strumento può calcolare la <strong>riduzione minima delle spese</strong> necessaria per raggiungere il tuo "Numero FIRE", offrendoti un target concreto su cui lavorare.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Ottimizzazione Spese</h4>
+                <div class="field"><label>Obiettivo FIRE:</label><span class="value">€1,200,000</span></div>
+                <div class="field"><label>Spese Attuali:</label><span class="value">€25,000/anno</span></div>
+                <div style="text-align: center; margin-top: 15px;"><button style="background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Avvia Ottimizzazione</button></div>
+            </div>
+
+            <h3 id="gestione-scenari">2.9 Gestione Scenari</h3>
+            <p>Salva una simulazione completa come "Scenario A". Puoi quindi modificare i parametri, eseguire una nuova simulazione e <strong>confrontare i risultati fianco a fianco</strong> nei grafici e nelle tabelle. È ideale per valutare l'impatto di diverse scelte (es. cambiare l'asset allocation o l'età di ritiro).</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Gestione Scenari</h4>
+                <div style="display: flex; justify-content: space-around; padding: 10px;">
+                    <button style="background-color: #28a745; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Salva Scenario A</button>
+                    <button style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Reset Scenario A</button>
+                </div>
+            </div>
+
+            <h3 id="entrate-uscite">2.10 Entrate e Uscite</h3>
+            <p>Tramite un'interfaccia a tab, puoi inserire in modo dettagliato tutte le tue <strong>entrate ricorrenti</strong> (stipendi, affitti), <strong>entrate una tantum</strong> (bonus, eredità), <strong>uscite ricorrenti</strong> (bollette, spese quotidiane) e <strong>uscite una tantum</strong> (acquisto auto, viaggi).</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Entrate e Uscite</h4>
+                <div style="display: flex; justify-content: space-around; padding: 10px;">
+                    <button style="background-color: #007bff; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Entrate Ricorrenti</button>
+                    <button style="background-color: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 5px;">Uscite Ricorrenti</button>
+                </div>
+                <table class="table-placeholder" style="margin-top: 15px;">
+                    <thead><tr><th>Descrizione</th><th>Valore (€)</th><th>Inizio</th><th>Fine</th></tr></thead>
+                    <tbody>
+                        <tr><td>Stipendio</td><td>2500</td><td>2025</td><td>2050</td></tr>
+                        <tr><td>Affitto</td><td>500</td><td>2025</td><td>2070</td></tr>
+                    </tbody>
+                </table>
+            </div>
 
             <h2 id="tipi-simulazione">3. Tipi di Simulazione</h2>
             <ul>
@@ -109,19 +374,112 @@
                 <li><strong>Backtest Storico:</strong> Testa il tuo piano contro dati di mercato passati.</li>
             </ul>
 
+            <div class="usage-tip">
+                <p><strong>Nuove Funzionalità Aggiunte:</strong></p>
+                <ul>
+                    <li><strong>Stima Pensione:</strong> Puoi ora stimare la tua pensione pubblica futura e includerla automaticamente nelle tue entrate.</li>
+                    <li><strong>Ottimizzazione Spese:</strong> Una funzione che ti aiuta a identificare le riduzioni di spesa necessarie per raggiungere i tuoi obiettivi.</li>
+                </ul>
+            </div>
+
             <h2 id="risultati-simulazione">4. Risultati della Simulazione</h2>
-            <p>I risultati sono presentati in modo chiaro e contestuale:</p>
-            <ul>
-                <li><strong>Obiettivo Raggiungibile:</strong> Messaggio di successo se raggiungi il tuo "Numero FIRE".</li>
-                <li><strong>Piano Sostenibile:</strong> Se termini la simulazione con un capitale positivo, anche senza raggiungere il Numero FIRE.</li>
-                <li><strong>Capitale Esaurito:</strong> Se il tuo capitale si esaurisce prima della fine.</li>
-            </ul>
-            <p>In ogni messaggio, vedrai chiaramente il tuo <strong>Numero FIRE obiettivo</strong> e il <strong>capitale finale raggiunto</strong>, per un confronto immediato.</p>
+            <p class="section-intro">Una volta avviata la simulazione, i risultati vengono presentati in una serie di tab, ognuna dedicata a un aspetto specifico della tua situazione finanziaria. Quasi ogni grafico o tabella ha un pulsante <strong>Esporta in Excel</strong> per permetterti di analizzare i dati offline.</p>
+
+            <h3 id="risultati-panoramica">4.1 Panoramica</h3>
+            <p>Questa è la prima tab che vedi e ti offre un riassunto immediato dell'esito della simulazione. Un messaggio chiaro ti dirà se il tuo piano è sostenibile, se hai raggiunto il tuo "Numero FIRE" o se il capitale si è esaurito. Vengono presentati suggerimenti e commenti contestuali per aiutarti a interpretare i risultati.</p>
+
+            <h3 id="risultati-piano">4.2 Piano Finanziario</h3>
+            <p>Mostra il <strong>Piano Finanziario Guidato</strong> aggiornato in base ai risultati della simulazione. È lo stesso pannello descritto nella sezione 6, ma qui riflette l'esito del tuo piano.</p>
+
+            <h3 id="risultati-entrate-uscite">4.3 Entrate/Uscite</h3>
+            <p>Un grafico a barre che mostra l'evoluzione delle tue entrate e uscite totali, anno per anno. È utile per vedere quando le tue entrate superano le uscite e viceversa, specialmente nel passaggio dalla fase di accumulo a quella di ritiro.</p>
+
+            <h3 id="risultati-risparmio">4.4 Tasso di Risparmio</h3>
+            <p>Un grafico lineare che mostra l'andamento del tuo tasso di risparmio nel tempo. Ti permette di visualizzare come le tue decisioni finanziarie (aumenti di stipendio, nuove spese) impattano la tua capacità di risparmiare.</p>
+
+            <h3 id="risultati-patrimonio">4.5 Patrimonio Netto</h3>
+            <p>Questo grafico mostra l'evoluzione del tuo <strong>patrimonio netto</strong>, calcolato come la differenza tra il tuo capitale investito e i tuoi debiti residui. Offre una visione olistica della tua ricchezza.</p>
+
+            <h3 id="risultati-capitale">4.6 Andamento Capitale</h3>
+            <p>Il grafico principale che visualizza la crescita (o decrescita) del tuo capitale nel tempo. Se hai salvato uno "Scenario A", vedrai entrambi gli scenari sovrapposti per un confronto diretto.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Grafico Andamento Capitale</h4>
+                <div class="chart-placeholder"><div class="line"></div></div>
+            </div>
+
+            <h3 id="risultati-flussi">4.7 Flussi di Cassa</h3>
+            <p>Un grafico che dettaglia i flussi di cassa annuali, mostrando entrate, uscite, tasse e il risparmio netto. È fondamentale per capire dove vanno a finire i tuoi soldi ogni anno.</p>
+
+            <h3 id="risultati-debiti">4.8 Debiti</h3>
+            <p>Visualizza l'ammortamento dei tuoi debiti nel tempo, mostrando come il capitale residuo diminuisce anno dopo anno fino all'estinzione.</p>
+
+            <h3 id="risultati-fiscale">4.9 Impatto Fiscale</h3>
+            <p>Questo grafico scompone le tasse che paghi ogni anno, mostrando separatamente l'imposta sul reddito (IRPEF) e l'imposta sulle rendite finanziarie. Ti aiuta a capire il peso fiscale del tuo piano.</p>
+
+            <h3 id="risultati-benchmark">4.10 Benchmark</h3>
+            <p>Confronta la performance del tuo portafoglio con un investimento di benchmark passivo (con il rendimento che hai impostato nei parametri). Ti aiuta a valutare se la tua strategia sta generando valore aggiunto.</p>
+
+            <h3 id="risultati-dettaglio">4.11 Dettaglio Annuale</h3>
+            <p>Una tabella dettagliata che mostra, per ogni anno della simulazione, tutte le metriche finanziarie chiave: capitale iniziale e finale, entrate, uscite, tasse, rendimenti, e molto altro. È la vista più granulare dei tuoi dati.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Tabella Dettaglio Annuale</h4>
+                <table class="table-placeholder">
+                    <thead><tr><th>Anno</th><th>Età</th><th>Capitale Iniziale</th><th>Capitale Finale</th><th>...</th><th>Sankey</th></tr></thead>
+                    <tbody>
+                        <tr><td>2025</td><td>30</td><td>€50,000</td><td>€58,500</td><td>...</td><td><span style="font-size: 1.2em; cursor: pointer;">&#128443;</span></td></tr>
+                        <tr><td>2026</td><td>31</td><td>€58,500</td><td>€67,800</td><td>...</td><td><span style="font-size: 1.2em; cursor: pointer;">&#128443;</span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="usage-tip">
+                <p><strong>Funzionalità Speciale: Diagramma di Sankey</strong></p>
+                <p>In ogni riga della tabella, troverai un'icona a forma di grafico. Cliccandola, genererai un <strong>diagramma di Sankey</strong> per quell'anno specifico. Questo diagramma visualizza i flussi finanziari in modo intuitivo, mostrando come le tue entrate vengono distribuite tra uscite, tasse e risparmio. È uno strumento eccezionale per analizzare in dettaglio un singolo anno.</p>
+                <div class="visual-screenshot">
+                    <h4>Esempio: Diagramma di Sankey</h4>
+                    <div class="sankey-placeholder">
+                        <div class="sankey-node">Entrate</div>
+                        <div class="sankey-link"></div>
+                        <div class="sankey-node">Uscite</div>
+                        <div class="sankey-link"></div>
+                        <div class="sankey-node">Risparmio</div>
+                    </div>
+                </div>
+                <p>Dalla tabella puoi anche <strong>esportare i dati in PDF</strong> per un report pulito e stampabile.</p>
+            </div>
+
+            <h3 id="risultati-montecarlo">4.12 Monte Carlo</h3>
+            <p>Questa tab è visibile solo quando esegui una simulazione Monte Carlo. Mostra la <strong>distribuzione dei risultati finali</strong>, la <strong>probabilità di successo</strong> del tuo piano (quante simulazioni non hanno esaurito il capitale) e statistiche chiave come il risultato nel caso peggiore, nel caso migliore e mediano. Include anche un grafico che mostra tutti i possibili percorsi del tuo capitale.</p>
+            <div class="visual-screenshot">
+                <h4>Esempio: Distribuzione Monte Carlo</h4>
+                <div class="chart-placeholder" style="height: 180px; align-items: flex-start; justify-content: space-between; padding: 15px;">
+                    <div style="width: 100%; height: 100%; position: relative;">
+                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 80%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 0.7; border-radius: 5px;"></div>
+                        <div style="position: absolute; bottom: 0; left: 10%; width: 80%; height: 90%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 0.8; border-radius: 5px;"></div>
+                        <div style="position: absolute; bottom: 0; left: 20%; width: 60%; height: 100%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 0.9; border-radius: 5px;"></div>
+                        <div style="position: absolute; bottom: 0; left: 30%; width: 40%; height: 95%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 1; border-radius: 5px;"></div>
+                        <div style="position: absolute; bottom: 0; left: 40%; width: 20%; height: 85%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 0.9; border-radius: 5px;"></div>
+                        <div style="position: absolute; bottom: 0; left: 50%; width: 10%; height: 70%; background: linear-gradient(to top, #a8dadc, #457b9d); opacity: 0.8; border-radius: 5px;"></div>
+                    </div>
+                </div>
+            </div>
 
             <h2 id="goal-seek">5. Goal Seek</h2>
             <p>Usa questa funzione per trovare quali parametri modificare per raggiungere i tuoi obiettivi.</p>
 
-            <h2 id="gestione-dati">6. Gestione Dati</h2>
+            <h2 id="piano-finanziario">6. Piano Finanziario Guidato</h2>
+            <p class="section-intro">Una delle funzionalità più potenti del simulatore. Il Piano Finanziario Guidato analizza la tua situazione attuale e ti fornisce una serie di passi concreti e prioritari per migliorare la tua salute finanziaria e accelerare il tuo percorso verso il F.I.R.E.</p>
+            <p>Il piano si concentra su aree chiave come:</p>
+            <ul>
+                <li><strong>Costruzione del Fondo di Emergenza:</strong> Valuta la tua liquidità attuale rispetto alle tue spese mensili per assicurarti di avere una rete di sicurezza adeguata.</li>
+                <li><strong>Estinzione dei Debiti ad Alto Interesse:</strong> Identifica i debiti che stanno frenando la tua crescita finanziaria e ti incoraggia a dar loro la priorità.</li>
+                <li><strong>Ottimizzazione del Tasso di Risparmio:</strong> Analizza il tuo tasso di risparmio e ti fornisce un feedback per aiutarti a raggiungere soglie ottimali.</li>
+                <li><strong>Pianificazione Previdenziale:</strong> Ti ricorda l'importanza di pianificare la pensione e ti guida verso gli strumenti di stima.</li>
+            </ul>
+            <div class="usage-tip">
+                <p><strong>Consiglio:</strong> Segui i passi del piano nell'ordine in cui vengono presentati. Ogni passo completato è un grande progresso verso i tuoi obiettivi. Usa i pulsanti di azione (es. "Analizza le tue spese &rarr;") per navigare direttamente alle sezioni pertinenti del simulatore e agire subito.</p>
+            </div>
+
+            <h2 id="gestione-dati">7. Gestione Dati</h2>
             <p>Importa ed esporta i tuoi dati in formato JSON, Excel o PDF.</p>
 
         </div>
