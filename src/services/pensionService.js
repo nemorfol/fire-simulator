@@ -146,3 +146,65 @@ export function estimatePublicPension(pensionInputs) {
 
   return pensionIncome;
 }
+
+/**
+ * Calcola la rendita annua da un fondo pensione, inclusa una stima della tassazione.
+ * @param {object} fundInputs - Dati per il calcolo.
+ * @param {number} fundInputs.currentCapital - Capitale attuale nel fondo.
+ * @param {number} fundInputs.annualContribution - Contribuzione annua.
+ * @param {number} fundInputs.contributionYears - Anni di contribuzione rimanenti.
+ * @param {number} fundInputs.investmentReturn - Rendimento annuo del fondo (%).
+ * @param {number} fundInputs.conversionRate - Tasso di conversione in rendita (%).
+ * @param {number} fundInputs.nonDeductedContributionRate - Percentuale di contributi non dedotti (%).
+ * @returns {{finalCapital: number, annualAnnuity: number, netAnnuity: number, totalContributions: number, taxableBase: number, taxRate: number, taxAmount: number}}|null
+ */
+export function calculatePensionAnnuity(fundInputs) {
+  const {
+    currentCapital,
+    annualContribution,
+    contributionYears,
+    investmentReturn,
+    conversionRate,
+    nonDeductedContributionRate
+  } = fundInputs;
+
+  if (currentCapital === undefined || annualContribution === undefined || contributionYears === undefined || investmentReturn === undefined || conversionRate === undefined || nonDeductedContributionRate === undefined) {
+    return null;
+  }
+
+  const invReturn = parseFloat(investmentReturn) / 100;
+  const convRate = parseFloat(conversionRate) / 100;
+  const nonDeductedRate = parseFloat(nonDeductedContributionRate) / 100;
+
+  // Calcola il montante finale accumulato
+  let finalCapital = parseFloat(currentCapital) * Math.pow(1 + invReturn, contributionYears);
+  let totalContributions = 0;
+  for (let i = 1; i <= contributionYears; i++) {
+    finalCapital += parseFloat(annualContribution) * Math.pow(1 + invReturn, i);
+    totalContributions += parseFloat(annualContribution);
+  }
+
+  // Calcola la rendita annua lorda
+  const annualAnnuity = finalCapital * convRate;
+
+  // Calcolo della base imponibile e della tassazione (modello semplificato)
+  const totalNonDeductedContributions = totalContributions * nonDeductedRate;
+  const taxableBasePercentage = 1 - (totalNonDeductedContributions / finalCapital);
+  const taxableBase = annualAnnuity * taxableBasePercentage;
+  
+  // La tassazione sulla previdenza complementare è agevolata: 15% che si riduce dello 0.3% all'anno dopo il 15° anno di partecipazione, fino a un minimo del 9%.
+  // Qui semplifichiamo assumendo una tassazione fissa per illustrare il concetto.
+  const taxRate = 0.15; // 15% di tassazione sostitutiva (semplificato)
+  const taxAmount = taxableBase * taxRate;
+  const netAnnuity = annualAnnuity - taxAmount;
+
+  return {
+    finalCapital,
+    annualAnnuity,
+    netAnnuity,
+    totalContributions,
+    taxableBase,
+    taxRate,
+    taxAmount
+  };
+}

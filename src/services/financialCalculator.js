@@ -174,3 +174,81 @@ export function calculateVpwWithdrawal(portfolioValue, age, lifeExpectancy) {
   const withdrawalRate = 1 / remainingYears;
   return portfolioValue * withdrawalRate;
 }
+
+// Coefficienti di trasformazione ministeriali per il calcolo della rendita (validi per il 2024)
+const TRANSFORMATION_COEFFICIENTS = {
+  57: 0.04270,
+  58: 0.04378,
+  59: 0.04493,
+  60: 0.04615,
+  61: 0.04744,
+  62: 0.04882,
+  63: 0.05028,
+  64: 0.05184,
+  65: 0.05352,
+  66: 0.05531,
+  67: 0.05723,
+  68: 0.05931,
+  69: 0.06154,
+  70: 0.06395,
+  71: 0.06655,
+};
+
+/**
+ * Stima la rendita annua di un fondo pensione.
+ * @param {object} pensionFundInputs Dati di input del fondo pensione.
+ * @param {number} retirementAge Età di pensionamento.
+ * @param {number} currentAge Età attuale.
+ * @returns {object} Un oggetto con la rendita lorda, netta e il montante finale.
+ */
+export function calculatePensionAnnuity(pensionFundInputs, retirementAge, currentAge) {
+  const { 
+    currentLumpSum, 
+    pensionFundStartYear, 
+    annualContribution, 
+    annualReturnRate, 
+    nonDeductedContributionRate 
+  } = pensionFundInputs;
+
+  const yearsToRetirement = retirementAge - currentAge;
+  const returnRate = annualReturnRate / 100;
+
+  // 1. Calcola il montante finale alla data del pensionamento
+  let finalLumpSum = currentLumpSum * Math.pow(1 + returnRate, yearsToRetirement);
+  for (let i = 0; i < yearsToRetirement; i++) {
+    finalLumpSum += annualContribution * Math.pow(1 + returnRate, yearsToRetirement - i - 1);
+  }
+
+  // 2. Calcola l'anzianità di partecipazione per l'aliquota fiscale
+  const participationYears = (new Date().getFullYear()) - pensionFundStartYear + yearsToRetirement;
+  let taxRate = 0.15;
+  if (participationYears > 15) {
+    const reduction = (participationYears - 15) * 0.003;
+    taxRate = Math.max(0.09, 0.15 - reduction);
+  }
+
+  // 3. Recupera il coefficiente di trasformazione
+  const coefficient = TRANSFORMATION_COEFFICIENTS[retirementAge] || TRANSFORMATION_COEFFICIENTS[71]; // Fallback all'ultimo
+
+  if (!coefficient) {
+    return { error: "Coefficiente di trasformazione non disponibile per l'età specificata." };
+  }
+
+  // 4. Calcola la rendita annua lorda
+  const grossAnnuity = finalLumpSum * coefficient;
+
+  // 5. Calcola la rendita netta
+  // Si assume che i rendimenti siano già stati tassati in fase di accumulo.
+  // La tassazione si applica sulla parte di rendita derivante dai contributi dedotti.
+  const taxablePortion = 1 - (nonDeductedContributionRate / 100);
+  const taxes = (grossAnnuity * taxablePortion) * taxRate;
+  const netAnnuity = grossAnnuity - taxes;
+
+  return {
+    finalLumpSum: finalLumpSum,
+    grossAnnuity: grossAnnuity,
+    netAnnuity: netAnnuity,
+    appliedTaxRate: taxRate,
+    transformationCoefficient: coefficient,
+  };
+}

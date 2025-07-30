@@ -1,6 +1,7 @@
-feat: Aggiunta e correzione del piano finanziario guidato
+docs: Aggiornata e dettagliata la guida utente (guide.html)
 
-Aggiunto un nuovo componente `FinancialPlan.vue` che genera una guida passo-passo per l'utente basata sulla sua situazione finanziaria.
-Corretta la logica di navigazione per i pulsanti di azione nel piano, assicurando che lo scroll e il cambio di tab funzionino correttamente.
-Migliorato il calcolo della liquidità attuale per basarsi sull'asset allocation dell'utente invece di una stima fissa.
-Corretti vari bug minori e migliorata la stabilità generale.
+- Riorganizzata la sezione "Parametri" con sottosezioni dettagliate per ogni modulo di input (Impostazioni Simulazione, Stima Pensione, Scaglioni Fiscali, Asset Allocation, Debiti, Goal Seek, Ottimizzazione, Gestione Scenari, Entrate/Uscite).
+- Aggiunte rappresentazioni visuali (mockup HTML/CSS) di tutti i form e delle tabelle/grafici principali direttamente nelle sezioni pertinenti della guida per una migliore comprensione visiva.
+- Dettagliate le funzionalità di ogni grafico e tabella nella sezione "Risultati della Simulazione", inclusi export e diagramma di Sankey.
+- Aggiunta rappresentazione visuale per la sezione Monte Carlo.
+- Migliorati gli stili CSS per le nuove rappresentazioni visuali.

@@ -56,7 +56,7 @@ import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekSer
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
 import { findOptimalExpenseReduction } from './services/optimizationService';
 import { generateSimulationReport } from "./services/pdfGeneratorService.js";
-import { estimatePublicPension } from './services/pensionService';
+import { estimatePublicPension, calculatePensionAnnuity } from './services/pensionService';
 import axios from "axios"; // Aggiunto import
 
 // Funzioni di utilità
@@ -235,6 +235,14 @@ const formInputs = reactive({
     salaryGrowthRate: 2,
     contributionEndYear: 2050,
   }),
+  pensionFund: reactive({
+    currentCapital: 100000,
+    annualContribution: 5000,
+    contributionYears: 20,
+    investmentReturn: 5,
+    conversionRate: 4.5,
+    nonDeductedContributionRate: 0
+  }),
 });
 
 // Variabili per la UI
@@ -260,6 +268,7 @@ const isOptimizing = ref(false);
 const chartLabels = ref([]);
 const showDetailedTabs = ref(false);
 const activeTabName = ref(""); // Variabile per controllare il tab attivo
+const pensionAnnuity = ref(null);
 
 const visibleTabs = computed(() => {
   if (formInputs.simMode === "montecarlo") {
@@ -509,6 +518,44 @@ function handleEstimatePension() {
     mostraNotifica("Pensione Stimata", "La pensione pubblica è stata stimata e aggiunta alle entrate ricorrenti.");
   } else {
     mostraNotifica("Errore di Stima", "Impossibile stimare la pensione. Controlla i dati inseriti e i coefficienti nel servizio.", true);
+  }
+}
+
+function handleEstimatePensionFund() {
+  const result = calculatePensionAnnuity(formInputs.pensionFund);
+  pensionAnnuity.value = result;
+
+  if (result) {
+    const currentYear = new Date().getFullYear();
+    const retirementYear = currentYear + (formInputs.etaRitiro - formInputs.etaIniziale);
+    const endYear = parseInt(currentYear + (formInputs.etaMassimaSimulazione - formInputs.etaIniziale));
+
+    const pensionFundIncome = {
+      desc: "Rendita Fondo Pensione (Stimata)",
+      valore: Number(result.netAnnuity), // Usiamo la rendita netta
+      isTodayValue: false, // Il valore è calcolato all'anno di pensionamento
+      inizio: Number(retirementYear),
+      fine: Number(endYear),
+      incr: Number(0), // Per semplicità, non applichiamo crescita extra
+      inPensione: true,
+      taxRegime: "sostitutiva",
+      aliquotaSost: Number(result.taxRate * 100), // L'aliquota effettiva calcolata
+    };
+
+    // Rimuovi eventuali stime precedenti per evitare duplicati
+    const index = formInputs.entrateRicorrenti.findIndex(e => e.desc === "Rendita Fondo Pensione (Stimata)");
+    if (index !== -1) {
+      formInputs.entrateRicorrenti.splice(index, 1);
+    }
+
+    // Aggiungi la nuova stima
+    formInputs.entrateRicorrenti.push(pensionFundIncome);
+    mostraNotifica(
+      "Rendita Stimata e Aggiunta",
+      `La rendita netta stimata di ${formatterValuta.format(result.netAnnuity)} è stata aggiunta alle entrate ricorrenti.`
+    );
+  } else {
+    mostraNotifica("Errore di Stima", "Impossibile stimare la rendita del fondo pensione. Controlla i dati inseriti.", true);
   }
 }
 
@@ -978,8 +1025,11 @@ onMounted(() => {
         @calculate-life-expectancy="handleCalcolaSperanzaDiVita"
       />
       <PensionEstimator 
-        v-model="formInputs.pension"
+        v-model:pensionInputs="formInputs.pension"
+        v-model:pensionFundInputs="formInputs.pensionFund"
+        :pensionAnnuity="pensionAnnuity"
         @estimate-pension="handleEstimatePension"
+        @estimate-pension-fund="handleEstimatePensionFund"
         id="pension-estimator"
       />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
