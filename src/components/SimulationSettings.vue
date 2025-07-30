@@ -48,6 +48,15 @@ const showPercentualePrelievo = computed(() => {
           <option value="greatRecession">Grande Recessione (2008-2009)</option>
         </select>
       </div>
+      <div class="p-2 bg-gray-200 rounded-lg col-span-1 md:col-span-2">
+        <label for="inflationScenario" class="block text-center font-bold mb-2">Scenario Inflazione</label>
+        <select id="inflationScenario" class="w-full" v-model="localFormInputs.inflationScenario" title="Seleziona uno scenario di inflazione per testare la resilienza del tuo piano.">
+          <option value="none">Tasso Fisso (dal campo sotto)</option>
+          <option value="highInflation">Inflazione Alta</option>
+          <option value="lowInflation">Inflazione Bassa</option>
+          <option value="volatileInflation">Inflazione Volatile</option>
+        </select>
+      </div>
 
       <!-- Riga 2 -->
       <div>

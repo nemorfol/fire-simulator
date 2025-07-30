@@ -1,3 +1,6 @@
-docs(guide): aggiorna la guida con la nota sull'aggiornamento automatico
+feat(longevity): implementa analisi longevità granulare con dati ISTAT
 
-- Aggiunta una nota nella guida per informare l'utente che il coefficiente di conversione del fondo pensione viene aggiornato automaticamente in base all'età di ritiro.
+- Aggiunto il servizio `longevityService.js` per gestire i dati di aspettativa di vita ISTAT e calcolare l'età massima di simulazione per diversi percentili (50°, 75°, 90°, 95°).
+- Modificato `App.vue` per utilizzare il nuovo servizio di longevità, permettendo la selezione del sesso e del percentile per la stima dell'età massima di simulazione.
+- Aggiornato `SimulationSettings.vue` con i campi di input per sesso e percentile di longevità.
+- Aggiornata la guida (`guide.html`) per descrivere le nuove opzioni di longevità.

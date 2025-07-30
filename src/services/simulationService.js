@@ -26,6 +26,62 @@ const crisisScenarios = {
   },
 };
 
+const inflationScenarios = {
+  none: { type: 'fixed' }, // Usa il tasso fisso dal form
+  highInflation: {
+    type: 'sequence',
+    rates: {
+      0: 0.05, // Anno 0: 5%
+      1: 0.04, // Anno 1: 4%
+      2: 0.03, // Anno 2: 3%
+      3: 0.025, // Anno 3 in poi: 2.5%
+    },
+  },
+  lowInflation: {
+    type: 'sequence',
+    rates: {
+      0: 0.01, // Anno 0: 1%
+      1: 0.015, // Anno 1: 1.5%
+      2: 0.02, // Anno 2 in poi: 2%
+    },
+  },
+  volatileInflation: {
+    type: 'sequence',
+    rates: {
+      0: 0.06, // Anno 0: 6%
+      1: 0.01, // Anno 1: 1%
+      2: 0.04, // Anno 2: 4%
+      3: 0.015, // Anno 3: 1.5%
+      4: 0.03, // Anno 4 in poi: 3%
+    },
+  },
+};
+
+function getInflationRateForYear(scenarioType, yearIndex, initialInflationRate) {
+  if (scenarioType === 'none') {
+    return initialInflationRate / 100;
+  }
+
+  const scenario = inflationScenarios[scenarioType];
+  if (!scenario || scenario.type !== 'sequence') {
+    return initialInflationRate / 100; // Fallback
+  }
+
+  const rates = scenario.rates;
+  const years = Object.keys(rates).map(Number).sort((a, b) => a - b);
+
+  let rate = initialInflationRate / 100; // Default al tasso iniziale
+
+  for (let i = 0; i < years.length; i++) {
+    if (yearIndex >= years[i]) {
+      rate = rates[years[i]];
+    } else {
+      break;
+    }
+  }
+  return rate;
+}
+
 // Funzioni di Calcolo Principali
 export function calcolaTasseProgressive(reddito, scaglioni) {
   let tasse = 0;
@@ -95,7 +151,7 @@ export function calcolaProiezione(
   simulazioneStartYear // Nuovo parametro
 ) {
   const inputs = JSON.parse(JSON.stringify(baseInputs));
-  
+  const initialInflationRate = inputs.impostazioni.tassoInflazione; // Tasso di inflazione base dal form
 
   const risultatiFinali = [];
   let capitalePerConto = {};
@@ -127,8 +183,12 @@ export function calcolaProiezione(
     };
 
     // Calcolo del capitale in termini reali
-    const inflationFactor = Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - simulazioneStartYear);
-    risultatoAnno.capitaleInizialeReale = risultatoAnno.capitaleIniziale / inflationFactor;
+    const currentInflationRate = getInflationRateForYear(
+      inputs.impostazioni.inflationScenario,
+      anno - simulazioneStartYear,
+      initialInflationRate
+    );
+    risultatoAnno.capitaleInizialeReale = risultatoAnno.capitaleIniziale / Math.pow(1 + currentInflationRate, anno - simulazioneStartYear);
 
     // INIZIALIZZA TUTTE LE POSSIBILI VOCI A 0 PER QUEST'ANNO
     inputs.entrate.ricorrenti.forEach(e => { risultatoAnno[e.desc] = 0; });
@@ -220,10 +280,11 @@ export function calcolaProiezione(
     inputs.uscite.ricorrenti.forEach((u) => {
       if (anno >= u.inizio && anno <= u.fine) {
         const yearsPassed = anno - u.inizio;
-        const inflazioneApplicata =
-          u.inflazioneSpecifica > 0
-            ? u.inflazioneSpecifica
-            : inputs.impostazioni.tassoInflazione;
+        const inflazioneApplicata = getInflationRateForYear(
+          inputs.impostazioni.inflationScenario,
+          anno - simulazioneStartYear,
+          initialInflationRate
+        ) * 100; // Converti in percentuale per l'uso successivo
         let valoreCorrenteUscita = u.valore * Math.pow(1 + u.incr / 100, yearsPassed);
         if (u.isTodayValue) {
           valoreCorrenteUscita *= Math.pow(1 + inflazioneApplicata / 100, yearsPassed);
@@ -257,14 +318,24 @@ export function calcolaProiezione(
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'prelievoFissoInflazione') {
         // Calcola il prelievo fisso iniziale (es. 4% del capitale iniziale) e lo aggiusta per l'inflazione
         const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100); // Usiamo regolaFIRE come base per il prelievo iniziale
-        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
+        const currentInflationRateForWithdrawal = getInflationRateForYear(
+          inputs.impostazioni.inflationScenario,
+          anno - simulazioneStartYear,
+          initialInflationRate
+        );
+        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + currentInflationRateForWithdrawal, anno - simulazioneStartYear);
         risultatoAnno.prelievo = adjustedWithdrawal;
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'vpw') {
         const withdrawalAmount = calculateVpwWithdrawal(risultatoAnno.capitaleIniziale, etaCorrente, inputs.impostazioni.etaRitiro + 30); // Assuming a 30-year retirement
         risultatoAnno.prelievo = withdrawalAmount;
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'regolaFIRE') {
         const initialWithdrawal = inputs.impostazioni.capitaleIniziale * (inputs.impostazioni.regolaFIRE / 100);
-        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + inputs.impostazioni.tassoInflazione / 100, anno - annoInizio);
+        const currentInflationRateForWithdrawal = getInflationRateForYear(
+          inputs.impostazioni.inflationScenario,
+          anno - simulazioneStartYear,
+          initialInflationRate
+        );
+        const adjustedWithdrawal = initialWithdrawal * Math.pow(1 + currentInflationRateForWithdrawal, anno - simulazioneStartYear);
         risultatoAnno.prelievo = adjustedWithdrawal;
     } else if (inFaseDiRitiro && inputs.impostazioni.strategiaPrelievo.trim() === 'guardrails') {
         if (anno === inputs.impostazioni.etaRitiro) {

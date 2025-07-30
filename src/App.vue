@@ -213,6 +213,7 @@ const formInputs = reactive({
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
   scenarioCrisi: "none", // Nuovo campo per la selezione dello scenario di crisi
+  inflationScenario: "none", // Nuovo campo per la selezione dello scenario di inflazione
   taxBrackets: reactive([
     { finoA: 28000, aliquota: 23 },
     { finoA: 50000, aliquota: 35 },
