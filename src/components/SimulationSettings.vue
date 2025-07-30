@@ -1,6 +1,5 @@
 <script setup>
-import { defineProps, defineEmits, computed, ref } from 'vue';
-import { getLifeExpectancy } from '../services/lifeExpectancyService';
+import { defineProps, defineEmits, computed } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -9,7 +8,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'calculate-life-expectancy']);
 
 const localFormInputs = computed({
   get() {
@@ -19,36 +18,6 @@ const localFormInputs = computed({
     emit('update:modelValue', value);
   }
 });
-
-const sex = ref('M'); // Default to Male
-const lifeExpectancy = ref(null);
-const isLoading = ref(false);
-const errorMessage = ref('');
-
-async function fetchLifeExpectancy() {
-  isLoading.value = true;
-  errorMessage.value = '';
-  lifeExpectancy.value = null;
-
-  try {
-    const remainingExpectancy = await getLifeExpectancy(localFormInputs.value.etaIniziale, sex.value);
-    if (remainingExpectancy !== null) {
-      const totalLifeExpectancy = localFormInputs.value.etaIniziale + remainingExpectancy;
-      lifeExpectancy.value = totalLifeExpectancy;
-      if (totalLifeExpectancy > localFormInputs.value.etaIniziale) {
-        localFormInputs.value.etaMassimaSimulazione = Math.round(totalLifeExpectancy);
-      } else {
-        errorMessage.value = `La speranza di vita calcolata (${totalLifeExpectancy.toFixed(1)}) è inferiore all'età iniziale. Imposta manualmente l'età massima.`;
-      }
-    } else {
-      errorMessage.value = 'Dati non disponibili per l\'età e il sesso inseriti.';
-    }
-  } catch (error) {
-    errorMessage.value = 'Errore nel recupero dei dati.';
-  } finally {
-    isLoading.value = false;
-  }
-}
 
 const showMonteCarloParams = computed(() => localFormInputs.value.simMode === 'montecarlo');
 const showFaseRitiroParams = computed(() => localFormInputs.value.isRetirement);
@@ -155,11 +124,20 @@ const showPercentualePrelievo = computed(() => {
           step="100"
         />
       </div>
-       <div>
-        <label for="sex" class="block text-sm mb-1">Sesso</label>
-        <select id="sex" v-model="sex" class="w-full">
-          <option value="M">Maschio</option>
-          <option value="F">Femmina</option>
+      <div>
+        <label for="gender" class="block text-sm mb-1">Sesso</label>
+        <select id="gender" class="w-full" v-model="localFormInputs.gender">
+          <option value="male">Maschio</option>
+          <option value="female">Femmina</option>
+        </select>
+      </div>
+      <div>
+        <label for="longevityPercentile" class="block text-sm mb-1">Percentile Longevità</label>
+        <select id="longevityPercentile" class="w-full" v-model="localFormInputs.longevityPercentile">
+          <option value="50">50° Percentile (Mediana)</option>
+          <option value="75">75° Percentile</option>
+          <option value="90">90° Percentile</option>
+          <option value="95">95° Percentile</option>
         </select>
       </div>
       <div>
@@ -171,12 +149,10 @@ const showPercentualePrelievo = computed(() => {
             v-model="localFormInputs.etaMassimaSimulazione"
             class="flex-grow"
           />
-          <button @click="fetchLifeExpectancy" class="btn btn-secondary ml-2" :disabled="isLoading">
-            {{ isLoading ? 'Caricamento...' : 'Calcola da ISTAT' }}
+          <button @click="$emit('calculate-life-expectancy')" class="btn btn-secondary ml-2">
+            Calcola da ISTAT
           </button>
         </div>
-        <p v-if="lifeExpectancy" class="text-sm mt-1">Speranza di vita stimata (ISTAT): {{ lifeExpectancy.toFixed(2) }} anni</p>
-        <p v-if="errorMessage" class="text-sm mt-1 text-red-500">{{ errorMessage }}</p>
       </div>
 
       <!-- Riga 4 -->

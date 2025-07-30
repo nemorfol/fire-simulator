@@ -1,5 +1,3 @@
-feat(pension): aggiorna automaticamente il coefficiente di conversione
+docs(guide): aggiorna la guida con la nota sull'aggiornamento automatico
 
-- Aggiunta una tabella di coefficienti di conversione standard per i fondi pensione in pensionService.js.
-- Implementata una funzione getFundConversionCoefficient per recuperare il coefficiente in base all'età.
-- Aggiunto un watch in App.vue che aggiorna automaticamente il campo del coefficiente di conversione quando l'utente modifica l'età di ritiro.
+- Aggiunta una nota nella guida per informare l'utente che il coefficiente di conversione del fondo pensione viene aggiornato automaticamente in base all'età di ritiro.

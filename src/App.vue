@@ -57,6 +57,7 @@ import { avviaSimulazione as runSimulationService } from "./services/simulationS
 import { findOptimalExpenseReduction } from './services/optimizationService';
 import { generateSimulationReport } from "./services/pdfGeneratorService.js";
 import { estimatePublicPension, calculatePensionAnnuity, getFundConversionCoefficient } from './services/pensionService';
+import { getLifespanByPercentile } from './services/longevityService';
 import axios from "axios"; // Aggiunto import
 
 // Funzioni di utilità
@@ -243,6 +244,8 @@ const formInputs = reactive({
     conversionRate: 4.5,
     nonDeductedContributionRate: 0
   }),
+  gender: "male", // Aggiunto campo per il sesso
+  longevityPercentile: 50, // Aggiunto campo per il percentile di longevità
 });
 
 // Variabili per la UI
@@ -942,42 +945,50 @@ function handleExportTaxImpactExcel() {
 
 async function handleCalcolaSperanzaDiVita() {
   try {
-    // Mostra un loader o un messaggio all'utente
     mostraNotifica(
       "Calcolo in corso...",
       "Recupero della speranza di vita in corso."
     );
 
-    // Esegui la chiamata API
-    // NOTA: L'API fornita è un esempio e restituisce dati complessi in formato CSV.
-    // Per un'implementazione reale, sarebbe necessario parsare questo CSV
-    // per estrarre la speranza di vita corretta in base ai parametri dell'utente (es. età attuale).
-    // Per semplicità, qui usiamo un valore fisso.
-    // const response = await axios.get('https://api.statbank.dk/v1/data/FOLK1A/CSV?lang=en&delimiter=Semicolon&OMR%C3%85DE=000&K%C3%98N=M%2CK&ALDER=*&Tid=*');
-
-    // Valore di default per la speranza di vita.
-    const speranzaDiVita = 85;
-
-    formInputs.etaMassimaSimulazione = speranzaDiVita;
-
-    // Nascondi il loader e mostra un messaggio di successo
-    chiudiNotifica();
-    mostraNotifica(
-      "Calcolo completato",
-      `L'età massima di simulazione è stata impostata a ${speranzaDiVita} anni.`
+    const estimatedLifespan = getLifespanByPercentile(
+      formInputs.etaIniziale,
+      formInputs.gender,
+      formInputs.longevityPercentile
     );
+
+    if (estimatedLifespan) {
+      formInputs.etaMassimaSimulazione = estimatedLifespan;
+      chiudiNotifica();
+      mostraNotifica(
+        "Calcolo completato",
+        `L'età massima di simulazione è stata impostata a ${estimatedLifespan} anni (percentile ${formInputs.longevityPercentile}).`
+      );
+    } else {
+      throw new Error("Impossibile stimare la speranza di vita con i dati forniti.");
+    }
   } catch (error) {
     console.error("Errore nel calcolo della speranza di vita:", error);
     chiudiNotifica();
     mostraNotifica(
       "Errore",
-      "Impossibile calcolare la speranza di vita. Usiamo un valore di default. Controlla la console per maggiori dettagli.",
+      `Impossibile calcolare la speranza di vita: ${error.message}. Verrà usato un valore di default (85 anni).`,
       true
     );
-    // Fallback a un valore di default in caso di errore
-    formInputs.etaMassimaSimulazione = 85;
+    formInputs.etaMassimaSimulazione = 85; // Fallback a un valore di default in caso di errore
   }
 }
+
+watch(() => [formInputs.etaIniziale, formInputs.gender, formInputs.longevityPercentile], async () => {
+  // Aggiorna l'età massima di simulazione ogni volta che cambiano età, sesso o percentile
+  const estimatedLifespan = getLifespanByPercentile(
+    formInputs.etaIniziale,
+    formInputs.gender,
+    formInputs.longevityPercentile
+  );
+  if (estimatedLifespan) {
+    formInputs.etaMassimaSimulazione = estimatedLifespan;
+  }
+});
 
 function handleScrollToAction(action) {
   if (action.tabName) {
