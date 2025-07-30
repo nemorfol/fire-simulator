@@ -22,6 +22,25 @@ const transformationCoefficients = {
   71: 0.06486,
 };
 
+// Tabella standard dei coefficienti di conversione per fondi pensione (valori di esempio)
+const fundConversionCoefficients = {
+  57: 4.27,
+  58: 4.38,
+  59: 4.49,
+  60: 4.61,
+  61: 4.73,
+  62: 4.87,
+  63: 5.01,
+  64: 5.16,
+  65: 5.32,
+  66: 5.49,
+  67: 5.66,
+  68: 5.85,
+  69: 6.05,
+  70: 6.26,
+  71: 6.49,
+};
+
 // Aliquota di computo per lavoratori dipendenti
 const contributionRate = 0.33;
 
@@ -207,4 +226,22 @@ export function calculatePensionAnnuity(fundInputs) {
     taxRate,
     taxAmount
   };
+}
+
+/**
+ * Restituisce il coefficiente di conversione del fondo pensione per una data età.
+ * @param {number} age - L'età per cui ottenere il coefficiente.
+ * @returns {number|null} Il coefficiente di conversione o null se non trovato.
+ */
+export function getFundConversionCoefficient(age) {
+  if (fundConversionCoefficients[age]) {
+    return fundConversionCoefficients[age];
+  }
+  // Se non c'è un'età esatta, potremmo interpolare o usare il più vicino.
+  // Per semplicità, restituiamo il valore più vicino o null se fuori range.
+  const ages = Object.keys(fundConversionCoefficients).map(Number);
+  const closestAge = ages.reduce((prev, curr) => {
+    return (Math.abs(curr - age) < Math.abs(prev - age) ? curr : prev);
+  });
+  return fundConversionCoefficients[closestAge];
 }

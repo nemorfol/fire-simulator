@@ -1,3 +1,6 @@
-feat: Implementata applicazione scenari di crisi in simulazione deterministica
+feat(pension): implementa stima fondo pensione e aggiorna guida
 
-Questo commit implementa la funzionalità di applicazione degli scenari di crisi anche per la simulazione deterministica. Il pattern di rendimento dello scenario selezionato viene applicato ai primi anni della simulazione, indipendentemente dagli anni storici della crisi.
+- Aggiunta la funzionalità di stima della rendita del fondo pensione, inclusa la possibilità di calcolare la rendita netta in base ai contributi non dedotti.
+- La rendita stimata viene aggiunta automaticamente alle entrate ricorrenti della simulazione.
+- Aggiornato il componente PensionEstimator per gestire i nuovi input e visualizzare la rendita netta.
+- Aggiornata la guida utente per includere la nuova funzionalità.

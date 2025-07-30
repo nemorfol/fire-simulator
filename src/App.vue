@@ -56,7 +56,7 @@ import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekSer
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
 import { findOptimalExpenseReduction } from './services/optimizationService';
 import { generateSimulationReport } from "./services/pdfGeneratorService.js";
-import { estimatePublicPension, calculatePensionAnnuity } from './services/pensionService';
+import { estimatePublicPension, calculatePensionAnnuity, getFundConversionCoefficient } from './services/pensionService';
 import axios from "axios"; // Aggiunto import
 
 // Funzioni di utilità
@@ -289,6 +289,16 @@ const visibleTabs = computed(() => {
     ];
   }
 });
+
+watch(
+  () => formInputs.etaRitiro,
+  (newRetirementAge) => {
+    const coefficient = getFundConversionCoefficient(newRetirementAge);
+    if (coefficient) {
+      formInputs.pensionFund.conversionRate = coefficient;
+    }
+  }
+);
 
 // Watch for changes in simMode to reset the active tab
 watch(
