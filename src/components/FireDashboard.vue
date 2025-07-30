@@ -4,10 +4,10 @@ import NetWorthChart from './NetWorthChart.vue';
 import DebtChart from './DebtChart.vue';
 import TaxImpactChart from './TaxImpactChart.vue';
 import SavingsRateChart from './SavingsRateChart.vue';
+
 import { 
   esportaPatrimonioNettoExcel, 
   esportaDebitiExcel, 
-  esportaImpattoFiscaleExcel, 
   esportaTassoRisparmioExcel 
 } from '../services/dataManagementService';
 
@@ -96,6 +96,8 @@ const emit = defineEmits(['view-details']);
       </button>
     </div>
   </div>
+
+  
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
     <div class="card bg-white border-2 border-gray-200">

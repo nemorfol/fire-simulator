@@ -1,7 +1,5 @@
-feat: Aggiunta calcolo speranza di vita e miglioramenti simulazione
+fix: Distinzione tra Patrimonio Netto e Capitale
 
-- Aggiunta la funzionalità per calcolare la speranza di vita basandosi sui dati ISTAT.
-- L'età massima di simulazione ora si basa sulla speranza di vita calcolata.
-- Migliorata la logica di calcolo del Numero FIRE per tenere conto dell'inflazione.
-- Resi più chiari e contestuali i messaggi di risultato della simulazione.
-- Aggiornata la guida utente per riflettere le nuove funzionalità.
+- Corretto il calcolo del Patrimonio Netto in `simulationService.js` per includere i debiti.
+- Aggiornato `NetWorthChart.vue` per visualizzare correttamente il Patrimonio Netto.
+- Ora i grafici "Andamento Patrimonio Netto" e "Andamento Capitale" mostrano dati distinti e corretti.

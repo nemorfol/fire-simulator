@@ -132,6 +132,34 @@ export function leggiInput(formInputs) {
 }
 
 /**
+ * Calcola le metriche finanziarie chiave basate sui dati dell'utente.
+ * @param {Object} financialData - L'oggetto contenente tutti i dati finanziari.
+ * @returns {Object} Un oggetto con le metriche calcolate.
+ */
+export function calculateFIREMetrics(financialData) {
+  const totalMonthlyIncome = financialData.entrateRicorrenti.reduce((sum, income) => sum + income.valore, 0);
+  const totalMonthlyExpenses = financialData.usciteRicorrenti.reduce((sum, expense) => sum + expense.valore, 0);
+  
+  const savingsRate = totalMonthlyIncome > 0 ? ((totalMonthlyIncome - totalMonthlyExpenses) / totalMonthlyIncome) * 100 : 0;
+  
+  // Calcola la liquidità totale in base all'asset allocation
+  const totalCash = financialData.assetAllocation
+    .filter(asset => asset.nome.toLowerCase().includes('liquidit'))
+    .reduce((sum, asset) => sum + (financialData.capitaleIniziale * (asset.quota / 100)), 0);
+
+  const totalDebt = financialData.debiti.reduce((sum, debt) => sum + debt.importoIniziale, 0);
+
+  return {
+    totalMonthlyIncome,
+    totalMonthlyExpenses,
+    savingsRate,
+    totalCash,
+    totalDebt,
+  };
+}
+
+
+/**
  * Calcola il prelievo annuale utilizzando la strategia Variable Percentage Withdrawal (VPW).
  * @param {number} portfolioValue - Il valore attuale del portafoglio.
  * @param {number} age - L'età attuale.

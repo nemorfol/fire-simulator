@@ -61,7 +61,7 @@ const aggregatedExpenseData = computed(() => {
   }));
 });
 
-console.log('Aggregated Expense Data (for selected year):', aggregatedExpenseData.value);
+
 
 const expenseTrendData = computed(() => {
   const currentYear = new Date().getFullYear();
@@ -74,10 +74,10 @@ const expenseTrendData = computed(() => {
       minYear = item.inizio;
     }
     if (item.fine) {
-      console.log(`Checking item.fine: ${item.fine}, current maxYear: ${maxYear}`);
+      
       if (item.fine > maxYear) {
         maxYear = item.fine;
-        console.log(`maxYear updated to: ${maxYear}`);
+        
       }
     }
   });
@@ -86,9 +86,9 @@ const expenseTrendData = computed(() => {
   for (let year = minYear; year <= maxYear; year++) {
     years.push(year);
   }
-  console.log('ExpenseTrendData - minYear:', minYear);
-  console.log('ExpenseTrendData - maxYear:', maxYear);
-  console.log('ExpenseTrendData - years array:', years);
+  
+  
+  
 
   const categories = [...new Set(props.usciteRicorrenti.map(item => item.desc || 'Senza Categoria'))];
   const colors = [

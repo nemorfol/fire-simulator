@@ -219,7 +219,7 @@ export function generateSimulationReport(ultimoRisultato, risultatiHeader, risul
     y += lineHeight;
     doc.setFontSize(8);
 
-    console.log("Dati per la tabella Risultati Annuali:", ultimoRisultato);
+    
 
     const headers = ["Anno", "Età", "Capitale Iniziale", "Entrate", "Uscite", "Flusso Cassa Netto", "Rendimento Netto", "Capitale Finale"];
     const data = ultimoRisultato.map(row => [

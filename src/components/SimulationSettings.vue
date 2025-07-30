@@ -128,6 +128,16 @@ const showPercentualePrelievo = computed(() => {
           title="La percentuale di tassazione applicata annualmente sui rendimenti del tuo capitale investito."
         />
       </div>
+      <div>
+        <label for="benchmarkReturn" class="block text-sm mb-1">Rendimento Benchmark (%)</label>
+        <input
+          type="number"
+          id="benchmarkReturn"
+          v-model="localFormInputs.benchmarkReturn"
+          step="0.1"
+          title="Il rendimento annuale medio atteso del benchmark di riferimento (es. 8% per S&P 500)."
+        />
+      </div>
       <div id="fase-ritiro-params">
         <label for="etaRitiro" class="block text-sm mb-1">Età di Ritiro</label>
         <input

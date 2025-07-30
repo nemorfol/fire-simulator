@@ -1,6 +1,6 @@
 <script setup>
 // Force re-compilation
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, reactive, onMounted, computed, watch, nextTick } from "vue";
 import SimulationSettings from "./components/SimulationSettings.vue";
 import TaxBrackets from "./components/TaxBrackets.vue";
 import AssetAllocation from "./components/AssetAllocation.vue";
@@ -30,6 +30,10 @@ import Tab from "./components/Tab.vue"; // Nuovo import
 import Tabs from "./components/Tabs.vue"; // Nuovo import
 import SavingsRateChart from "./components/SavingsRateChart.vue"; // Nuovo import
 import DebtChart from "./components/DebtChart.vue";
+import BenchmarkChart from './components/BenchmarkChart.vue';
+import OptimizationDashboard from './components/OptimizationDashboard.vue';
+import PensionEstimator from './components/PensionEstimator.vue';
+import FinancialPlan from './components/FinancialPlan.vue';
 
 // Import services
 import { leggiInput } from "./services/financialCalculator";
@@ -42,6 +46,7 @@ import {
   esportaTassoRisparmioExcel as exportSavingsRateExcelService,
   esportaEntrateUsciteExcel as exportIncomeExpenseExcelService,
   esportaDebitiExcel as exportDebtsExcelService, // Aggiunto
+  esportaImpattoFiscaleExcel as exportTaxImpactExcelService, // Aggiunto
   esportaMonteCarloExcel as exportMonteCarloExcelService,
   salvaConfronto as saveComparisonService,
   resetConfronto as resetComparisonService,
@@ -49,7 +54,9 @@ import {
 import { popolaDatiIniziali as initializeDataService } from "./services/initializationService.js";
 import { eseguiGoalSeek as executeGoalSeekService } from "./services/goalSeekService.js";
 import { avviaSimulazione as runSimulationService } from "./services/simulationService.js";
+import { findOptimalExpenseReduction } from './services/optimizationService';
 import { generateSimulationReport } from "./services/pdfGeneratorService.js";
+import { estimatePublicPension } from './services/pensionService';
 import axios from "axios"; // Aggiunto import
 
 // Funzioni di utilità
@@ -196,6 +203,7 @@ const formInputs = reactive({
   tassoInflazione: 2.5,
   regolaFIRE: 4,
   tassazioneRendite: 26,
+  benchmarkReturn: 7,
   etaRitiro: 65,
   numeroSimulazioni: 500,
   simMode: "deterministic",
@@ -221,6 +229,12 @@ const formInputs = reactive({
   correlazioneAsset: "",
   debiti: reactive([]), // Nuovo campo per la gestione dei debiti
   goalSeek: reactive({ goalSeekTarget: 65, goalSeekVariable: null }),
+  pension: reactive({
+    initialGrossSalary: 35000,
+    contributionStartYear: 2010,
+    salaryGrowthRate: 2,
+    contributionEndYear: 2050,
+  }),
 });
 
 // Variabili per la UI
@@ -241,6 +255,8 @@ const scenarioA = ref(null);
 const ultimoRisultato = ref([]);
 const monteCarloSummaryResults = ref(null);
 const monteCarloResults = ref([]); // Nuovo ref per i risultati completi di Monte Carlo
+const optimizationResult = ref(null);
+const isOptimizing = ref(false);
 const chartLabels = ref([]);
 const showDetailedTabs = ref(false);
 const activeTabName = ref(""); // Variabile per controllare il tab attivo
@@ -251,6 +267,7 @@ const visibleTabs = computed(() => {
   } else {
     return [
       "Panoramica",
+      "Piano Finanziario",
       "Entrate/Uscite",
       "Tasso di Risparmio",
       "Patrimonio Netto",
@@ -258,6 +275,7 @@ const visibleTabs = computed(() => {
       "Flussi di Cassa",
       "Debiti",
       "Impatto Fiscale",
+      "Benchmark",
       "Dettaglio Annuale",
     ];
   }
@@ -432,6 +450,68 @@ async function handleExecuteGoalSeek() {
   await executeGoalSeekService(formInputs, loaderHidden, mostraNotifica);
 }
 
+async function handleRunOptimization() {
+  isOptimizing.value = true;
+  optimizationResult.value = null;
+
+  const simulationRunner = async (inputs) => {
+    return await runSimulationService(
+      inputs,
+      ref([]), // ref temporanei per non sporcare l'UI
+      ref(null),
+      ref(null),
+      ref([]),
+      ref([]),
+      ref(null),
+      ref([]),
+      ref(true),
+      ref(false),
+      ref(false),
+      () => {},
+      ref([]),
+      true // Modalità silenziosa
+    );
+  };
+
+  try {
+    const result = await findOptimalExpenseReduction(
+      formInputs,
+      numeroFIRE.value,
+      simulationRunner
+    );
+    optimizationResult.value = result;
+  } catch (error) {
+    mostraNotifica("Errore di Ottimizzazione", error.message, true);
+  }
+
+  isOptimizing.value = false;
+}
+
+function handleEstimatePension() {
+  const pensionInputs = {
+    ...formInputs.pension,
+    retirementAge: formInputs.etaRitiro,
+    currentAge: formInputs.etaIniziale,
+    simulationEndAge: formInputs.etaMassimaSimulazione,
+  };
+
+  const estimatedPension = estimatePublicPension(pensionInputs);
+
+  if (estimatedPension) {
+    // Rimuovi eventuali stime di pensione precedenti per evitare duplicati
+    const index = formInputs.entrateRicorrenti.findIndex(e => e.desc === "Pensione Pubblica (Stimata)");
+    if (index !== -1) {
+      formInputs.entrateRicorrenti.splice(index, 1);
+    }
+
+    // Aggiungi la nuova stima
+    formInputs.entrateRicorrenti.push(estimatedPension);
+    mostraNotifica("Pensione Stimata", "La pensione pubblica è stata stimata e aggiunta alle entrate ricorrenti.");
+  } else {
+    mostraNotifica("Errore di Stima", "Impossibile stimare la pensione. Controlla i dati inseriti e i coefficienti nel servizio.", true);
+  }
+}
+
 // Funzione di avvio simulazione (delegate al servizio simulationService)
 async function handleAvviaSimulazione() {
   const res = await runSimulationService(
@@ -452,7 +532,6 @@ async function handleAvviaSimulazione() {
 
   if (res) {
     // Assicurati che la simulazione sia stata completata con successo
-    console.log("Ultimo Risultato in App.vue:", ultimoRisultato.value);
     showResults.value = true; // Mostra il pannello dei risultati
     if (formInputs.simMode === "montecarlo") {
       showDetailedTabs.value = false; // Nascondi i tab dettagliati per Monte Carlo
@@ -800,6 +879,10 @@ function handleExportDebtsExcel() {
   exportDebtsExcelService(ultimoRisultato.value, formInputs, mostraNotifica);
 }
 
+function handleExportTaxImpactExcel() {
+  exportTaxImpactExcelService(ultimoRisultato.value, mostraNotifica);
+}
+
 async function handleCalcolaSperanzaDiVita() {
   try {
     // Mostra un loader o un messaggio all'utente
@@ -837,6 +920,20 @@ async function handleCalcolaSperanzaDiVita() {
     // Fallback a un valore di default in caso di errore
     formInputs.etaMassimaSimulazione = 85;
   }
+}
+
+function handleScrollToAction(action) {
+  if (action.tabName) {
+    activeTabName.value = action.tabName;
+  }
+
+  // Usa nextTick per assicurarti che il DOM sia aggiornato prima di scrollare
+  nextTick(() => {
+    const element = document.getElementById(action.target);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
 }
 
 // Lifecycle hook
@@ -880,9 +977,14 @@ onMounted(() => {
         v-model="formInputs"
         @calculate-life-expectancy="handleCalcolaSperanzaDiVita"
       />
+      <PensionEstimator 
+        v-model="formInputs.pension"
+        @estimate-pension="handleEstimatePension"
+        id="pension-estimator"
+      />
       <TaxBrackets v-model:taxBrackets="formInputs.taxBrackets" />
       <AssetAllocation v-model="formInputs.assetAllocation" />
-      <DebtSection v-model="formInputs.debiti" />
+      <DebtSection v-model="formInputs.debiti" id="debt-section" />
       <GoalSeek
         :goalSeekTarget="formInputs.goalSeek.goalSeekTarget"
         :goalSeekVariable="formInputs.goalSeek.goalSeekVariable"
@@ -891,6 +993,11 @@ onMounted(() => {
         :goal-seek-options="goalSeekVariableOptions"
         @execute-goal-seek="handleExecuteGoalSeek"
       />
+      <OptimizationDashboard
+        :isLoading="isOptimizing"
+        :result="optimizationResult"
+        @run-optimization="handleRunOptimization"
+      />
       <DataManagement
         :save-scenario-btn-disabled="saveScenarioBtnDisabled"
         :reset-scenario-btn-hidden="resetScenarioBtnHidden"
@@ -898,6 +1005,7 @@ onMounted(() => {
         @reset-scenario="handleResetScenario"
       />
       <IncomeExpenseTabs
+        id="income-expense-tabs"
         :formInputs="formInputs"
         :aggiungiRiga="aggiungiRiga"
         :rimuoviRiga="rimuoviRiga"
@@ -936,26 +1044,31 @@ onMounted(() => {
         <tab title="Panoramica">
           <SuggestionsCard :suggestions="suggestions" />
         </tab>
+        <tab title="Piano Finanziario">
+          <FinancialPlan :financialData="formInputs" @scroll-to-section="handleScrollToAction" />
+        </tab>
         <tab title="Entrate/Uscite">
-          <div class="card">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="card-title mb-0">Entrate e Uscite per Categoria</h3>
-              <button
-                @click="handleExportIncomeExpenseExcel()"
-                class="btn btn-secondary btn-sm"
-              >
-                Esporta in Excel
-              </button>
+          <div id="income-expense-chart-container">
+            <div class="card">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="card-title mb-0">Entrate e Uscite per Categoria</h3>
+                <button
+                  @click="handleExportIncomeExpenseExcel()"
+                  class="btn btn-secondary btn-sm"
+                >
+                  Esporta in Excel
+                </button>
+              </div>
+              <IncomeExpenseChart
+                :simulationResults="ultimoRisultato"
+                :incomeCategories="
+                  formInputs.entrateRicorrenti.map((e) => e.desc)
+                "
+                :expenseCategories="
+                  formInputs.usciteRicorrenti.map((u) => u.desc)
+                "
+              />
             </div>
-            <IncomeExpenseChart
-              :simulationResults="ultimoRisultato"
-              :incomeCategories="
-                formInputs.entrateRicorrenti.map((e) => e.desc)
-              "
-              :expenseCategories="
-                formInputs.usciteRicorrenti.map((u) => u.desc)
-              "
-            />
           </div>
         </tab>
         <tab title="Tasso di Risparmio">
@@ -1049,7 +1162,14 @@ onMounted(() => {
           </div>
         </tab>
         <tab title="Impatto Fiscale">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="card-title mb-0">Impatto Fiscale nel Tempo</h3>
+            <button @click="handleExportTaxImpactExcel()" class="btn btn-secondary btn-sm">Esporta in Excel</button>
+          </div>
           <TaxImpactChart :simulationResults="ultimoRisultato" />
+        </tab>
+        <tab title="Benchmark">
+          <BenchmarkChart :simulationData="ultimoRisultato" :benchmarkReturn="formInputs.benchmarkReturn / 100" />
         </tab>
         <tab title="Dettaglio Annuale">
           <div id="dettaglio-annuale-card" class="card mt-8">

@@ -99,13 +99,13 @@ function drawChart(labels, datasets) {
           intersect: true,
         },
         onClick: (e, activeElements) => {
-          console.log('Chart click event:', e);
-          console.log('Active elements:', activeElements);
+          
+          
           if (activeElements.length > 0) {
             const clickedElementIndex = activeElements[0].index;
             const year = chartInstance.value.data.labels[clickedElementIndex];
-            console.log('Clicked Element Index:', clickedElementIndex);
-            console.log('ExpenseTrendChart emitting year:', year);
+            
+            
             emit('year-selected', year);
           }
         }

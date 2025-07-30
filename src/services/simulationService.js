@@ -641,7 +641,8 @@ export async function avviaSimulazione(
   showResultsRef,
   saveScenarioBtnDisabledRef,
   mostraNotifica,
-  monteCarloResultsRef // Nuovo parametro
+  monteCarloResultsRef, // Nuovo parametro
+  isSilent = false // Parametro per la modalità silenziosa
 ) {
   loaderHiddenRef.value = false;
   await new Promise((resolve) => setTimeout(resolve, 50));
@@ -761,7 +762,9 @@ export async function avviaSimulazione(
       break;
   }
 
-  showResultsRef.value = true;
-  loaderHiddenRef.value = true;
-  return results;
+  if (!isSilent) {
+    showResultsRef.value = true;
+    loaderHiddenRef.value = true;
+  }
+  return { ultimoRisultato: results };
 }
