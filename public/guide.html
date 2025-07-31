@@ -263,42 +263,370 @@
                 <div class="field"><label>Età Massima Simulazione:</label><span class="value">95</span></div>
                 <div class="field"><label>Strategia di Prelievo:</label><span class="value">Regola FIRE (Fisso)</span></div>
             </div>
-            <ul>
-                <li><strong>Modalità di Simulazione:</strong> Scegli tra <strong>Deterministica</strong> (una singola proiezione basata sui rendimenti medi attesi) e <strong>Monte Carlo</strong> (migliaia di proiezioni basate su rendimenti e volatilità per calcolare le probabilità di successo).</li>
-                <li><strong>Dati Anagrafici e Capitale:</strong> Inserisci la tua <strong>età attuale</strong>, il <strong>capitale di partenza</strong> e l'<strong>età di ritiro</strong> desiderata.</li>
-                <li><strong>Parametri Economici:</strong> Imposta il <strong>tasso di inflazione</strong> medio annuo previsto e la <strong>tassazione sulle rendite</strong> finanziarie. Ora puoi anche selezionare uno <strong>Scenario Inflazione</strong> predefinito (es. Inflazione Alta, Bassa, Volatile) per testare la resilienza del tuo piano a diverse evoluzioni inflazionistiche.</li>
-                <li><strong>Età Massima Simulazione:</strong> L'orizzonte temporale della simulazione. Ora puoi impostarla manualmente, oppure selezionare il tuo <strong>Sesso</strong> e un <strong>Percentile di Longevità</strong> (es. 50° percentile per la mediana, 95° per un'aspettativa di vita più lunga) e usare il pulsante <strong>Calcola da ISTAT</strong>. Il simulatore utilizzerà dati statistici per suggerire un'età massima di simulazione coerente con la tua scelta.</li>
-                <li><strong>Strategia di Prelievo in Ritiro:</strong> Scegli come preleverai i fondi durante la pensione. Opzioni includono la famosa <strong>Regola del 4%</strong>, una <strong>Percentuale Costante</strong> del portafoglio, o strategie più dinamiche come <strong>VPW</strong> e <strong>Guardrails</strong>.</li>
-                <li><strong>Scenario di Crisi:</strong> Puoi includere uno shock di mercato iniziale nella tua simulazione (es. un crollo del 30%) per testare la resilienza del tuo piano.</li>
+            <ul class="list-disc list-inside mt-6 space-y-2">
+          <li>
+            <strong>Modalità Simulazione:</strong> Scegli come calcolare i
+            rendimenti futuri.
+            <ul class="list-circle list-inside ml-6 mt-2">
+              <li>
+                <strong>Deterministica:</strong> Utilizza un tasso di
+                rendimento medio fisso per ogni anno. Utile per una visione di
+                base.
+              </li>
+              <li>
+                <strong>Monte Carlo:</strong> Esegue migliaia di simulazioni
+                con rendimenti casuali (basati su media e deviazione standard)
+                per calcolare la probabilità di successo del tuo piano.
+              </li>
+              <li>
+                <strong>Backtest Storico:</strong> (Funzionalità in sviluppo)
+                Utilizzerà dati storici reali per testare il tuo piano contro
+                scenari passati.
+              </li>
             </ul>
+          </li>
+          <li>
+            <strong>Scenario di Crisi:</strong> Applica l'impatto di una crisi
+            finanziaria storica (es. bolla Dot-com, Grande Recessione) ai
+            primi anni della tua simulazione per testarne la resilienza.
+            Questa opzione è disponibile solo per la modalità Deterministica.
+          </li>
+          <li>
+            <strong>Età Iniziale:</strong> La tua età attuale.
+          </li>
+          <li>
+            <strong>Capitale Iniziale:</strong> Il valore totale del tuo
+            patrimonio investibile all'inizio della simulazione.
+          </li>
+          <li>
+            <strong>Inflazione Annuo (%):</strong> Il tasso di inflazione
+            medio annuo atteso. Questo valore viene utilizzato per calcolare
+            il valore reale del tuo capitale nel tempo.
+          </li>
+          <li>
+            <strong>Regola FIRE (%):</strong> La percentuale del tuo capitale
+            che intendi prelevare ogni anno durante la pensione (es. 4%).
+            Questo valore è usato principalmente per calcolare il tuo "Numero
+            FIRE" target.
+          </li>
+          <li>
+            <strong>Tassazione Rendite (%):</strong> L'aliquota fiscale media
+            applicata ai guadagni da capitale (plusvalenze, dividendi, ecc.).
+          </li>
+          <li>
+            <strong>Rendimento Benchmark (%):</strong> Il rendimento annuo
+            atteso di un indice di riferimento (es. S&P 500) che verrà
+            mostrato nel grafico "Benchmark" per confrontare la performance
+            del tuo portafoglio.
+          </li>
+          <li>
+            <strong>Età di Ritiro:</strong> L'età in cui prevedi di andare in
+            pensione e iniziare a prelevare dal tuo capitale.
+          </li>
+          <li>
+            <strong>Età Massima Simulazione:</strong> L'età fino alla quale
+            vuoi che la simulazione venga eseguita.
+          </li>
+          <li>
+            <strong>Strategia di Prelievo:</strong> Il metodo che intendi
+            utilizzare per prelevare fondi durante la pensione.
+            <ul class="list-circle list-inside ml-6 mt-2">
+              <li>
+                <strong>Regola FIRE (Fisso):</strong> Preleva una percentuale
+                fissa del capitale *iniziale* al momento del ritiro,
+                aggiustata per l'inflazione ogni anno.
+              </li>
+              <li>
+                <strong>Percentuale Costante:</strong> Preleva una percentuale
+                fissa del capitale *corrente* ogni anno.
+              </li>
+              <li>
+                <strong>E molti altri...</strong> (VPW, Guardrails, ecc.)
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Numero Simulazioni:</strong> Il numero di iterazioni da
+            eseguire nella modalità Monte Carlo. Un numero più alto (es.
+            1000+) fornisce risultati più accurati ma richiede più tempo di
+            calcolo.
+          </li>
+        </ul>
 
-            <h3 id="stima-pensione">2.3 Stima Previdenziale</h3>
-            <p>Uno strumento potente per integrare la previdenza pubblica e complementare nel tuo piano. È diviso in due sezioni:</p>
+        <h3 class="text-xl font-bold mt-8 mb-4">
+          1.1 Scenari Avanzati di Simulazione
+        </h3>
+        <p>
+          Per aumentare il realismo e testare la robustezza del tuo piano, il
+          simulatore offre opzioni avanzate per modellare l'incertezza economica.
+        </p>
+
+        <!-- Scenari Inflazione -->
+        <div class="mt-6 p-4 border-l-4 border-blue-500 bg-blue-50 rounded-r-lg">
+          <h4 class="text-lg font-semibold text-blue-800">
+            Scenari di Inflazione
+          </h4>
+          <p class="mt-2">
+            Puoi scegliere come l'inflazione impatterà le tue proiezioni. Oltre a
+            un tasso fisso, puoi selezionare scenari predefiniti che simulano
+            diverse condizioni economiche:
+          </p>
+          <div class="mockup-browser mt-4">
+            <div class="mockup-browser-toolbar">
+              <div class="mockup-dot" style="background-color: #f87171;"></div>
+              <div class="mockup-dot" style="background-color: #fbbd23;"></div>
+              <div class="mockup-dot" style="background-color: #34d399;"></div>
+            </div>
+            <div class="mockup-content">
+              <label class="form-label">Scenario Inflazione</label>
+              <select class="form-input mt-1">
+                <option>Tasso Fisso (dal campo apposito)</option>
+                <option>Inflazione Alta</option>
+                <option>Inflazione Bassa</option>
+                <option>Inflazione Volatile</option>
+              </select>
+            </div>
+          </div>
+          <ul class="list-disc list-inside mt-4 space-y-1 text-gray-700">
+            <li>
+              <strong>Inflazione Alta:</strong> Simula un periodo con un'inflazione
+              superiore alla media.
+            </li>
+            <li>
+              <strong>Inflazione Bassa:</strong> Simula un periodo con un'inflazione
+              inferiore alla media.
+            </li>
+            <li>
+              <strong>Inflazione Volatile:</strong> Simula un'alternanza di anni con
+              inflazione alta e bassa, testando la flessibilità del piano.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Analisi Longevità -->
+        <div class="mt-6 p-4 border-l-4 border-green-500 bg-green-50 rounded-r-lg">
+          <h4 class="text-lg font-semibold text-green-800">
+            Analisi di Longevità (Aspettativa di Vita)
+          </h4>
+          <p class="mt-2">
+            Per rendere la durata della simulazione più realistica, puoi calcolare
+            la tua aspettativa di vita basandoti sui dati ufficiali ISTAT.
+          </p>
+          <div class="mockup-browser mt-4">
+            <div class="mockup-browser-toolbar">
+              <div class="mockup-dot" style="background-color: #f87171;"></div>
+              <div class="mockup-dot" style="background-color: #fbbd23;"></div>
+              <div class="mockup-dot" style="background-color: #34d399;"></div>
+            </div>
+            <div class="mockup-content grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="form-label">Sesso</label>
+                <select class="form-input mt-1">
+                  <option>Maschio</option>
+                  <option>Femmina</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Percentile Longevità</label>
+                <select class="form-input mt-1">
+                  <option>50° Percentile (Mediana)</option>
+                  <option>75° Percentile</option>
+                  <option>90° Percentile</option>
+                  <option>95° Percentile</option>
+                </select>
+              </div>
+              <div class="flex items-end">
+                <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+                  Calcola da ISTAT
+                </button>
+              </div>
+            </div>
+          </div>
+          <p class="mt-4 text-gray-700">
+            Selezionando il tuo sesso e un
+            <strong>percentile di longevità</strong> (la probabilità di vivere
+            *almeno fino a* una certa età), il simulatore imposterà
+            automaticamente l' "Età Massima Simulazione". Scegliere un percentile
+            alto (es. 95°) aumenta il margine di sicurezza del tuo piano.
+          </p>
+        </div>
+
+        <h3 class="text-xl font-bold mt-8 mb-4">
+          1.2 Strategie di Prelievo in Pensione
+        </h3>
+        <p>
+          Questa sezione è cruciale e definisce come preleverai i fondi dal tuo
+          portafoglio una volta andato in pensione. La strategia scelta ha un
+          impatto enorme sulla longevità del tuo capitale.
+        </p>
+        <div class="mockup-browser mt-6">
+          <div class="mockup-browser-toolbar">
+            <div class="mockup-dot" style="background-color: #f87171;"></div>
+            <div class="mockup-dot" style="background-color: #fbbd23;"></div>
+            <div class="mockup-dot" style="background-color: #34d399;"></div>
+          </div>
+          <div class="mockup-content">
+            <label class="form-label">Strategia di Prelievo</label>
+            <select class="form-input mt-1">
+              <option>Regola FIRE (Fisso)</option>
+              <option>Percentuale Costante</option>
+              <option>Prelievo Fisso (Aggiustato per Inflazione)</option>
+              <option>Variable Percentage Withdrawal (VPW)</option>
+              <option>Guardrails</option>
+            </select>
+          </div>
+        </div>
+        <ul class="list-disc list-inside mt-4 space-y-2">
+          <li>
+            <strong>Regola FIRE (Fisso):</strong> Prelevi un importo fisso ogni
+            anno, calcolato come percentuale (es. 4%) del tuo capitale al
+            *momento del ritiro* e successivamente aggiustato ogni anno per
+            l'inflazione. È una strategia semplice ma rigida.
+          </li>
+          <li>
+            <strong>Percentuale Costante:</strong> Prelevi una percentuale fissa
+            (es. 4%) del valore *corrente* del tuo portafoglio ogni anno. Questo
+            significa che preleverai di più quando il mercato va bene e di meno
+            quando va male, adattandoti alle condizioni.
+          </li>
+          <li>
+            <strong>Variable Percentage Withdrawal (VPW):</strong> Una strategia
+            dinamica che calcola la percentuale di prelievo annuale in base alla
+            tua età e al valore del portafoglio, utilizzando tabelle di
+            aspettativa di vita per garantire che i fondi durino.
+          </li>
+          <li>
+            <strong>Guardrails (Binari di Sicurezza):</strong> Un metodo ibrido.
+            Parti con un prelievo base (es. 4%). Se il valore del tuo portafoglio
+            supera una certa soglia superiore (es. +20% rispetto al valore
+            iniziale), aumenti i prelievi dell'anno successivo. Se scende sotto una
+            soglia inferiore (es. -20%), li diminuisci. Questo fornisce un
+            equilibrio tra flessibilità e stabilità.
+          </li>
+        </ul>
+
+        <h3 id="sankey-guide">2. Gestione Dati JSON</h3>
+        <p>
+          Questa sezione ti permette di salvare e caricare l'intera
+          configurazione della tua simulazione.
+        </p>
+        <ul class="list-disc list-inside mt-4">
+          <li>
+            <strong>Importa JSON:</strong> Carica un file
+            <code>.json</code> precedentemente salvato per ripristinare tutti
+            i parametri di input.
+          </li>
+          <li>
+            <strong>Esporta JSON:</strong> Salva tutti i parametri di input
+            attuali in un file <code>.json</code> sul tuo computer.
+          </li>
+        </ul>
+
+        <h2 class="text-2xl font-bold mt-8 mb-4">
+          Gestione dei Rischi
+        </h2>
+        <p>
+          Una pianificazione finanziaria solida non si limita a proiettare la crescita, ma deve anche tenere conto dei potenziali rischi che possono compromettere il tuo percorso. Questa sezione ti permette di valutare e visualizzare i rischi più comuni associati a un piano di indipendenza finanziaria a lungo termine.
+        </p>
+
+        <div class="mockup-browser mt-6">
+          <div class="mockup-browser-toolbar">
+            <div class="mockup-dot" style="background-color: #f87171;"></div>
+            <div class="mockup-dot" style="background-color: #fbbd23;"></div>
+            <div class="mockup-dot" style="background-color: #34d399;"></div>
+          </div>
+          <div class="mockup-content">
+            <h4 class="text-lg font-bold mb-4">Dashboard di Gestione dei Rischi</h4>
+            <p class="mb-6">Valuta la probabilità e l'impatto di ogni rischio sul tuo piano finanziario. I rischi più critici verranno evidenziati nella matrice sottostante.</p>
             
-            <h4>Pensione Pubblica</h4>
-            <p>Inserendo il tuo stipendio lordo, l'anno di inizio contribuzione e la crescita salariale attesa, il simulatore calcolerà una <strong>stima della tua pensione pubblica</strong> e la aggiungerà automaticamente alle tue entrate ricorrenti a partire dall'età di ritiro.</p>
-            <div class="visual-screenshot">
-                <h5>Esempio: Stima Pensione Pubblica</h5>
-                <div class="field"><label>Reddito Annuo Lordo (€):</label><span class="value">35000</span></div>
-                <div class="field"><label>Anno Inizio Contribuzione:</label><span class="value">2010</span></div>
-                <div class="field"><label>Crescita Annua Stipendio (%):</label><span class="value">1.5</span></div>
-            </div>
+            <!-- Tabella di Valutazione dei Rischi -->
+            <table class="w-full text-sm">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="w-1/4 text-center p-2 font-semibold">Rischio</th>
+                  <th class="w-2/4 text-center p-2 font-semibold">Descrizione</th>
+                  <th class="w-1/4 text-left p-2 font-semibold">Probabilità</th>
+                  <th class="w-1/4 text-left p-2 font-semibold">Impatto</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="p-2 font-semibold">Sequenza dei Rendimenti</td>
+                  <td class="p-2 text-gray-600">Rischio di subire perdite di mercato significative nei primi anni di ritiro...</td>
+                  <td class="p-2"><select class="form-input"><option>Basso</option><option>Medio</option><option>Alto</option></select></td>
+                  <td class="p-2"><select class="form-input"><option>Basso</option><option>Medio</option><option>Alto</option></select></td>
+                </tr>
+                <tr>
+                  <td class="p-2 font-semibold">Inflazione Elevata</td>
+                  <td class="p-2 text-gray-600">Rischio che un'inflazione superiore alle attese eroda il potere d'acquisto...</td>
+                  <td class="p-2"><select class="form-input"><option>Basso</option><option>Medio</option><option>Alto</option></select></td>
+                  <td class="p-2"><select class="form-input"><option>Basso</option><option>Medio</option><option>Alto</option></select></td>
+                </tr>
+                <!-- ... altre righe di rischi ... -->
+              </tbody>
+            </table>
 
-            <h4>Fondo Pensione (Rendita)</h4>
-            <p>Questa sezione ti permette di stimare la rendita che potresti ricevere dal tuo fondo pensione complementare. Inserendo il capitale attuale, i versamenti futuri e il rendimento atteso, puoi calcolare il montante finale e la <strong>rendita annua lorda e netta</strong>. Anche questa stima può essere aggiunta automaticamente alle tue entrate.</p>
-            <div class="visual-screenshot">
-                <h5>Esempio: Stima Rendita Fondo Pensione</h5>
-                <div class="field"><label>Montante Attuale (€):</label><span class="value">50000</span></div>
-                <div class="field"><label>Versamento Annuo (€):</label><span class="value">3000</span></div>
-                <div class="field"><label>Rendimento Annuo (%):</label><span class="value">4.0</span></div>
-                <div class="field"><label>Coefficiente di Conversione (%):</label><span class="value">4.5</span></div>
-                <div class="field"><label>Quota Contributi non Dedotti (%):</label><span class="value">10</span></div>
+            <!-- Matrice di Rischio -->
+            <div class="mt-8">
+              <h4 class="text-lg font-medium text-gray-800 mb-4">Matrice Probabilità / Impatto</h4>
+              <div class="flex flex-col border border-gray-300">
+                <div class="flex">
+                  <div class="w-1/4 p-2 bg-gray-300 font-bold text-center"></div>
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold text-center">Basso</div>
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold text-center">Medio</div>
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold text-center">Alto</div>
+                </div>
+                <div class="flex">
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold flex items-center justify-center">Alto</div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #facc15;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #f97316;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #ef4444;"></div>
+                </div>
+                <div class="flex">
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold flex items-center justify-center">Medio</div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #4ade80;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #facc15;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #f97316;"></div>
+                </div>
+                <div class="flex">
+                  <div class="w-1/4 p-2 bg-gray-200 font-bold flex items-center justify-center">Basso</div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #4ade80;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #4ade80;"></div>
+                  <div class="w-1/4 h-24 p-2 border-l border-t border-gray-300" style="background-color: #facc15;"></div>
+                </div>
+              </div>
             </div>
-            <div class="usage-tip">
-                <p><strong>Aggiornamento Automatico:</strong> Il campo <strong>Coefficiente di Conversione (%)</strong> viene aggiornato automaticamente quando modifichi l'<strong>Età di Ritiro</strong> nelle impostazioni principali, utilizzando una tabella standard. Puoi comunque sovrascrivere questo valore se disponi di un dato più preciso dal tuo fondo pensione.</p>
-            </div>
+          </div>
+        </div>
 
-            <h3 id="scaglioni-fiscali">2.4 Scaglioni Fiscali</h3>
+        <ul class="list-disc list-inside mt-4 space-y-2">
+          <li>
+            <strong>Tabella di Valutazione:</strong> Per ogni rischio elencato, puoi assegnare un livello di <strong>Probabilità</strong> (quanto è probabile che si verifichi) e di <strong>Impatto</strong> (quanto sarebbe grave per il tuo piano se si verificasse).
+          </li>
+          <li>
+            <strong>Matrice di Rischio:</strong> Questa matrice visualizza i rischi che hai valutato. I rischi posizionati nelle aree gialle, arancioni e rosse sono quelli che richiedono maggiore attenzione.
+          </li>
+          <li>
+            <strong>Simulazione con Rischi:</strong> Dopo aver valutato i rischi, puoi usare il pulsante <strong>"Avvia Sim. con Rischi"</strong>. Questa speciale simulazione applicherà degli "stress test" al tuo piano basati su tutti i rischi che hai contrassegnato con impatto "Alto", mostrandoti come si comporterebbe il tuo portafoglio nello scenario peggiore.
+          </li>
+        </ul>
+
+        <h4 class="text-lg font-semibold text-gray-800 mt-6 mb-2">Cosa Succede Durante la "Simulazione con Rischi"</h4>
+        <p>Quando avvii una simulazione con rischi, il programma non esegue una simulazione Monte Carlo, ma una <strong>simulazione deterministica pessimistica</strong>. Applica una serie di "stress test" al tuo piano basati <strong>solo sui rischi che hai valutato con impatto "Alto"</strong>. Ecco cosa succede nel dettaglio per ogni rischio:</p>
+        <ul class="list-disc list-inside mt-4 space-y-2 bg-red-50 p-4 rounded-lg border border-red-200 text-red-800">
+          <li><strong>Sequenza dei Rendimenti:</strong> Applica uno shock di mercato immediato, simulando un rendimento del <strong>-25%</strong> per i primi due anni della simulazione.</li>
+          <li><strong>Inflazione Elevata:</strong> Aumenta il tasso di inflazione di base di <strong>1,5 punti percentuali</strong> per tutta la durata della simulazione.</li>
+          <li><strong>Longevità:</strong> Estende la durata della simulazione di <strong>10 anni</strong>, costringendo il capitale a durare più a lungo.</li>
+          <li><strong>Spese Sanitarie Impreviste:</strong> Aggiunge una spesa una tantum di <strong>50.000 €</strong> all'età di 80 anni.</li>
+          <li><strong>Crollo di Mercato Prolungato:</strong> Riduce il rendimento medio atteso di tutti i tuoi asset di <strong>1,5 punti percentuali</strong> ogni anno.</li>
+          <li><strong>Declino Cognitivo:</strong> Aggiunge una nuova spesa ricorrente di <strong>10.000 € all'anno</strong> a partire dagli 85 anni.</li>
+          <li><strong>Modifiche Fiscali Sfavorevoli:</strong> Aumenta l'aliquota di tassazione sulle rendite di <strong>5 punti percentuali</strong>.</li>
+          <li><strong>Esigenze Familiari Impreviste:</strong> Aggiunge una spesa una tantum di <strong>30.000 €</strong> all'età di 60 anni.</li>
+          <li><strong>Errori Comportamentali:</strong> Riduce il tuo capitale finale di uno <strong>0,5%</strong> alla fine di ogni anno, simulando i costi di decisioni emotive o cattiva gestione.</li>
+          <li><strong>Aumento del Tenore di Vita:</strong> Aumenta il tasso di crescita annuale di tutte le tue spese ricorrenti di <strong>1 punto percentuale</strong>.</li>
+        </ul>
+
+        <h3>3. Scaglioni Fiscali</h3>
             <p>Per un calcolo delle tasse più preciso, puoi definire qui gli <strong>scaglioni IRPEF</strong> e le relative aliquote.</p>
             <div class="visual-screenshot">
                 <h4>Esempio: Scaglioni Fiscali</h4>

@@ -142,7 +142,7 @@ function sortBy(key) {
             <template v-if="['capitaleIniziale', 'totaleEntrate', 'totaleUscite', 'prelievo', 'utilePerditaLordo', 'impostaReddito', 'impostaRendite', 'utilePerditaNetto', 'capitalePreRendimento', 'rendimentoLordo', 'rendimentoNetto', 'capitaleFinale', 'capitaleInizialeReale', 'capitaleFinaleReale'].includes(header)">
               {{ formatterValuta.format(row[header]) }}
             </template>
-            <template v-else-if="['withdrawalRate', 'variazionePercentualeCapitale'].includes(header)">
+            <template v-else-if="['withdrawalRate', 'variazionePercentualeCapitale'].includes(header) && row[header] !== undefined && row[header] !== null">
               {{ row[header].toFixed(2) }}%
             </template>
             <template v-else>

@@ -1,7 +1,7 @@
 <script setup>
 // Force re-compilation
 import { ref, reactive, onMounted, computed, watch, nextTick } from "vue";
-import SimulationSettings from "./components/SimulationSettings.vue";
+import SettingsTabs from './components/SettingsTabs.vue';
 import TaxBrackets from "./components/TaxBrackets.vue";
 import AssetAllocation from "./components/AssetAllocation.vue";
 import GoalSeek from "./components/GoalSeek.vue";
@@ -59,6 +59,7 @@ import { generateSimulationReport } from "./services/pdfGeneratorService.js";
 import { estimatePublicPension, calculatePensionAnnuity, getFundConversionCoefficient } from './services/pensionService';
 import { getLifespanByPercentile } from './services/longevityService';
 import axios from "axios"; // Aggiunto import
+import { userRiskAssessments } from "./services/riskService.js";
 
 // Funzioni di utilità
 const formatterValuta = new Intl.NumberFormat("it-IT", {
@@ -213,6 +214,11 @@ const formInputs = reactive({
   strategiaPrelievo: "regolaFIRE",
   costiSanitariPensione: 0, // Nuovo campo per i costi sanitari in pensione
   scenarioCrisi: "none", // Nuovo campo per la selezione dello scenario di crisi
+  initialCrisisOptions: reactive({
+    enabled: false,
+    crashPercentage: -30,
+    durationYears: 3,
+  }),
   inflationScenario: "none", // Nuovo campo per la selezione dello scenario di inflazione
   taxBrackets: reactive([
     { finoA: 28000, aliquota: 23 },
@@ -365,7 +371,6 @@ const suggestions = computed(() => {
 
   let currentSuggestions = [];
   const ultimoAnnoRisultato = ultimoRisultato.value[ultimoRisultato.value.length - 1];
-  const fireNumberFormatted = formatterValuta.format(numeroFIRE.value);
   const capitaleFinaleFormatted = formatterValuta.format(ultimoAnnoRisultato.capitaleFinale);
 
   if (formInputs.simMode === "montecarlo") {
@@ -373,17 +378,13 @@ const suggestions = computed(() => {
       "Analisi Monte Carlo completata. Controlla la probabilità di successo nella dashboard."
     );
   } else {
-    if (datiFIRE.value) {
-      currentSuggestions.push(
-        `<strong>Obiettivo Raggiungibile:</strong> Hai raggiunto e superato il tuo Numero FIRE di <strong>${fireNumberFormatted}</strong>, concludendo la simulazione con un capitale di <strong>${capitaleFinaleFormatted}</strong>. Ottimo lavoro!`
-      );
-    } else if (ultimoAnnoRisultato && ultimoAnnoRisultato.capitaleFinale > 0) {
+    if (ultimoAnnoRisultato && ultimoAnnoRisultato.capitaleFinale > 0) {
         currentSuggestions.push(
-        `<strong>Piano Sostenibile ma Obiettivo FIRE non Raggiunto:</strong> Il tuo capitale non si esaurisce. Termini la simulazione con <strong>${capitaleFinaleFormatted}</strong>, ma il tuo Numero FIRE obiettivo era <strong>${fireNumberFormatted}</strong>. Il piano è sostenibile, ma per raggiungere la piena indipendenza finanziaria potresti dover rivedere le tue spese in pensione o aumentare i rendimenti.`
+        `<strong>Piano Sostenibile:</strong> Il tuo capitale non si esaurisce. Termini la simulazione con <strong>${capitaleFinaleFormatted}</strong>. Ottimo lavoro!`
       );
     } else {
       currentSuggestions.push(
-        `<strong>Capitale Esaurito:</strong> Il tuo capitale si esaurisce prima della fine della simulazione. Il tuo obiettivo FIRE era <strong>${fireNumberFormatted}</strong>. È necessario rivedere il piano per garantirne la sostenibilità.`
+        `<strong>Capitale Esaurito:</strong> Il tuo capitale si esaurisce prima della fine della simulazione. È necessario rivedere il piano per garantirne la sostenibilità.`
       );
     }
   }
@@ -574,7 +575,7 @@ function handleEstimatePensionFund() {
 }
 
 // Funzione di avvio simulazione (delegate al servizio simulationService)
-async function handleAvviaSimulazione() {
+async function handleAvviaSimulazione(riskAdjustments = null) {
   const res = await runSimulationService(
     formInputs,
     ultimoRisultato,
@@ -588,7 +589,9 @@ async function handleAvviaSimulazione() {
     showResults,
     saveScenarioBtnDisabled,
     mostraNotifica,
-    monteCarloResults // Passa i risultati completi di Monte Carlo
+    monteCarloResults, // Passa i risultati completi di Monte Carlo
+    formInputs.initialCrisisOptions, // Passa le opzioni della crisi iniziale
+    riskAdjustments // Passa gli aggiustamenti di rischio
   );
 
   if (res) {
@@ -602,6 +605,69 @@ async function handleAvviaSimulazione() {
       activeTabName.value = "Panoramica"; // Imposta il tab Panoramica come attivo
     }
   }
+}
+
+async function handleRunRiskAdjustedSimulation() {
+  const adjustments = {};
+  let adjustmentDescriptions = [];
+
+  userRiskAssessments.forEach(risk => {
+    if (risk.impact === 'Alto') {
+      switch (risk.id) {
+        case 'inflation':
+          adjustments.inflationIncrease = 1.5;
+          adjustmentDescriptions.push("Inflazione +1.5%");
+          break;
+        case 'sequence':
+          adjustments.applySequenceRisk = true;
+          adjustmentDescriptions.push("Shock di Mercato Iniziale");
+          break;
+        case 'health':
+          adjustments.addHealthExpense = true;
+          adjustmentDescriptions.push("Spesa Sanitaria Imprevista");
+          break;
+        case 'longevity':
+          adjustments.longevityIncrease = 10;
+          adjustmentDescriptions.push("Aspettativa di Vita +10 anni");
+          break;
+        case 'lifestyle_creep':
+          adjustments.applyLifestyleCreep = true;
+          adjustmentDescriptions.push("Aumento Tenore di Vita (+1% crescita spese)");
+          break;
+        case 'market_crash':
+          adjustments.marketCrash = true;
+          adjustmentDescriptions.push("Crollo Mercato Prolungato (-1.5% rendimento annuo)");
+          break;
+        case 'cognitive_decline':
+          adjustments.cognitiveDecline = true;
+          adjustmentDescriptions.push("Costi Declino Cognitivo (+10k €/anno da 85 anni)");
+          break;
+        case 'tax_changes':
+          adjustments.taxChanges = true;
+          adjustmentDescriptions.push("Aumento Tasse Rendite (+5%)");
+          break;
+        case 'family_needs':
+          adjustments.familyNeeds = true;
+          adjustmentDescriptions.push("Esigenze Familiari (+30k € a 60 anni)");
+          break;
+        case 'behavioral':
+          adjustments.behavioralErrors = true;
+          adjustmentDescriptions.push("Costi Errori Comportamentali (-0.5% del capitale/anno)");
+          break;
+      }
+    }
+  });
+
+  if (Object.keys(adjustments).length === 0) {
+    mostraNotifica("Nessun Rischio Selezionato", "Nessun rischio con impatto 'Alto' è stato selezionato. Verrà eseguita una simulazione standard.", false);
+    await handleAvviaSimulazione();
+    return;
+  }
+
+  mostraNotifica("Avvio Simulazione con Rischi...", `Applicando: ${adjustmentDescriptions.join(', ')}.`);
+
+  // Passa i parametri originali e l'oggetto degli aggiustamenti
+  await handleAvviaSimulazione(adjustments);
 }
 
 function handleViewDetails() {
@@ -795,8 +861,10 @@ function handleShowSankey(data) {
     layout: {
       title: `Flusso Finanziario Dettagliato per l'Anno ${currentYear}`,
       font: {
-        size: 10,
+        size: 12,
       },
+      width: 1280,
+      height: 890,
     },
   };
 
@@ -804,7 +872,7 @@ function handleShowSankey(data) {
   window.open(
     "/chart.html",
     "_blank",
-    "width=1000,height=700,resizable=yes,scrollbars=yes"
+    "width=1300,height=910,resizable=yes,scrollbars=yes"
   );
 }
 
@@ -898,10 +966,10 @@ function handleExportPdf() {
     risultatiHeader.value,
     risultatiBody.value,
     datiFIRE.value,
-    monteCarloSummaryResults.value, // Aggiunto monteCarloSummaryResults
+    monteCarloSummaryResults.value,
     formatterValuta,
     mostraNotifica,
-    formInputs
+    formInputs // Passa l'intero oggetto formInputs
   );
 }
 
@@ -1042,8 +1110,10 @@ onMounted(() => {
         @export-json="handleExportJson"
       />
 
-      <SimulationSettings
+      <SettingsTabs
         v-model="formInputs"
+        :stressTestResult="stressTestResult"
+        :formatterValuta="formatterValuta"
         @calculate-life-expectancy="handleCalcolaSperanzaDiVita"
       />
       <PensionEstimator 
@@ -1065,6 +1135,7 @@ onMounted(() => {
         :goal-seek-options="goalSeekVariableOptions"
         @execute-goal-seek="handleExecuteGoalSeek"
       />
+      
       <OptimizationDashboard
         :isLoading="isOptimizing"
         :result="optimizationResult"
@@ -1086,12 +1157,19 @@ onMounted(() => {
       />
     </div>
 
-    <div class="text-center my-8">
+    <div class="text-center my-8 flex justify-center items-center space-x-4">
       <button
         @click="handleAvviaSimulazione()"
         class="btn btn-primary text-lg px-8 py-3"
       >
-        Avvia Simulazione
+        Avvia Simulazione Standard
+      </button>
+      <button
+        @click="handleRunRiskAdjustedSimulation()"
+        class="btn btn-warning text-lg px-8 py-3 bg-yellow-500 hover:bg-yellow-600 text-white"
+        title="Esegue una simulazione pessimistica basata sui rischi con impatto 'Alto'"
+      >
+        Avvia Sim. con Rischi
       </button>
     </div>
 

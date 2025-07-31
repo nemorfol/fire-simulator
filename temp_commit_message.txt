@@ -1,6 +1,7 @@
-feat(longevity): implementa analisi longevità granulare con dati ISTAT
+feat(inflation): implementa scenari di inflazione predefiniti
 
-- Aggiunto il servizio `longevityService.js` per gestire i dati di aspettativa di vita ISTAT e calcolare l'età massima di simulazione per diversi percentili (50°, 75°, 90°, 95°).
-- Modificato `App.vue` per utilizzare il nuovo servizio di longevità, permettendo la selezione del sesso e del percentile per la stima dell'età massima di simulazione.
-- Aggiornato `SimulationSettings.vue` con i campi di input per sesso e percentile di longevità.
-- Aggiornata la guida (`guide.html`) per descrivere le nuove opzioni di longevità.
+- Aggiunti scenari di inflazione predefiniti (alta, bassa, volatile) in `simulationService.js`.
+- Modificata la logica di simulazione per utilizzare il tasso di inflazione dello scenario selezionato.
+- Aggiunto il campo `inflationScenario` a `formInputs` in `App.vue`.
+- Aggiornata l'interfaccia utente in `SimulationSettings.vue` con un menu a tendina per la selezione dello scenario di inflazione.
+- Aggiornata la guida (`guide.html`) per documentare la nuova funzionalità.

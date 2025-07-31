@@ -6,16 +6,10 @@ export function leggiInput(formInputs) {
       tassoInflazione: parseFloat(formInputs.tassoInflazione),
       regolaFIRE: parseFloat(formInputs.regolaFIRE),
       tassazioneRendite: parseFloat(formInputs.tassazioneRendite),
-      etaRitiro: parseInt(formInputs.etaRitiro),
-      numeroSimulazioni: parseInt(formInputs.numeroSimulazioni),
       simMode: formInputs.simMode,
-      etaMassimaSimulazione: parseInt(formInputs.etaMassimaSimulazione), // Aggiunto
-      
-      strategiaPrelievo: formInputs.strategiaPrelievo,
-      percentualePrelievo: parseFloat(formInputs.percentualePrelievo) || 0,
-      guardrailUpper: parseFloat(formInputs.guardrailUpper) || 0,
-      guardrailLower: parseFloat(formInputs.guardrailLower) || 0,
-      scenarioCrisi: formInputs.scenarioCrisi,
+      numeroSimulazioni: parseInt(formInputs.numeroSimulazioni) || 1000, // Aggiunto con fallback
+      inflationScenario: formInputs.inflationScenario, // Corretto
+      initialCrisisOptions: formInputs.initialCrisisOptions,
       rendimentoCapitale: formInputs.assetAllocation.reduce(
         (sum, asset) =>
           sum + (parseFloat(asset.quota) / 100) * parseFloat(asset.rendimento),
@@ -66,8 +60,8 @@ export function leggiInput(formInputs) {
         isTodayValue: u.isTodayValue,
         inizio: parseInt(u.inizio),
         fine: parseInt(u.fine),
-        incr: parseFloat(u.incr),
-        inflazioneSpecifica: parseFloat(u.inflazioneSpecifica),
+        incr: parseFloat(u.incr) || 0,
+        inflazioneSpecifica: parseFloat(u.inflazioneSpecifica) || 0,
       })),
       lumpSum: formInputs.usciteLumpSum.map((u) => ({
         desc: u.desc,
