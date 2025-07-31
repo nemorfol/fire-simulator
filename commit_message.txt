@@ -1,7 +1,13 @@
-docs: Aggiornata e dettagliata la guida utente (guide.html)
+feat: Implementa gestione rischi e corregge bug simulazioni
 
-- Riorganizzata la sezione "Parametri" con sottosezioni dettagliate per ogni modulo di input (Impostazioni Simulazione, Stima Pensione, Scaglioni Fiscali, Asset Allocation, Debiti, Goal Seek, Ottimizzazione, Gestione Scenari, Entrate/Uscite).
-- Aggiunte rappresentazioni visuali (mockup HTML/CSS) di tutti i form e delle tabelle/grafici principali direttamente nelle sezioni pertinenti della guida per una migliore comprensione visiva.
-- Dettagliate le funzionalità di ogni grafico e tabella nella sezione "Risultati della Simulazione", inclusi export e diagramma di Sankey.
-- Aggiunta rappresentazione visuale per la sezione Monte Carlo.
-- Migliorati gli stili CSS per le nuove rappresentazioni visuali.
+Questo commit introduce una nuova dashboard per la gestione dei rischi, permettendo agli utenti di valutare l'impatto di vari fattori sul loro piano finanziario.
+
+Inoltre, risolve una serie di bug critici nelle simulazioni deterministiche e Monte Carlo, garantendo che i calcoli siano ora corretti e affidabili.
+
+Le principali modifiche includono:
+- Aggiunta della dashboard di gestione dei rischi.
+- Correzione della logica di calcolo per i rischi "Longevità", "Spese Sanitarie" e "Declino Cognitivo".
+- Risoluzione di un bug che impediva alla simulazione Monte Carlo di essere eseguita correttamente.
+- Correzione di un bug che causava la visualizzazione di dati errati nei grafici.
+- Aggiornamento completo della guida utente per riflettere tutte le nuove funzionalità e le correzioni.
+- Aggiunta e configurazione di Vitest per i test automatici.

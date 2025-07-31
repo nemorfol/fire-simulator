@@ -888,7 +888,7 @@ const handleImportJson = (event) => {
       const importedData = JSON.parse(e.target.result);
       // Mantieni la reattività degli oggetti Vue
       for (const key in formInputs) {
-        if (Object.hasOwnProperty.call(formInputs, key)) {
+        if (Object.hasOwnProperty.call(formInputs, key) && importedData[key] !== undefined) {
           if (
             typeof formInputs[key] === "object" &&
             formInputs[key] !== null &&
@@ -913,6 +913,7 @@ const handleImportJson = (event) => {
         "Importazione Completata",
         "I dati della simulazione sono stati caricati dal file JSON."
       );
+      console.log('[DEBUG] formInputs dopo importazione JSON:', JSON.stringify(formInputs, null, 2));
     } catch (error) {
       console.error("Errore durante l'importazione JSON:", error);
       mostraNotifica(

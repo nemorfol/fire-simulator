@@ -90,7 +90,6 @@ export function calcolaProiezione(
   initialCrisisOptions = { enabled: false }
 ) {
   const inputs = JSON.parse(JSON.stringify(baseInputs));
-  const initialInflationRate = inputs.impostazioni.tassoInflazione;
   const risultatiFinali = [];
   let capitalePerConto = {};
   inputs.assetAllocation.forEach((asset) => {
@@ -117,11 +116,24 @@ export function calcolaProiezione(
         0
       ),
     };
+
+    console.log(
+      "inputs.impostazioni.inflationScenario=" +
+        inputs.impostazioni.inflationScenario
+    );
+    console.log(
+      "inputs.impostazioni.tassoInflazione=" +
+        inputs.impostazioni.tassoInflazione
+    );
+
     const currentInflationRate = getInflationRateForYear(
       inputs.impostazioni.inflationScenario,
       anno - simulazioneStartYear,
-      initialInflationRate
+      inputs.impostazioni.tassoInflazione // Passa il tasso di inflazione corrente
     );
+
+    console.log("infl=" + currentInflationRate);
+
     risultatoAnno.capitaleInizialeReale =
       risultatoAnno.capitaleIniziale /
       Math.pow(1 + currentInflationRate, anno - simulazioneStartYear);
@@ -169,7 +181,7 @@ export function calcolaProiezione(
         const i = getInflationRateForYear(
           inputs.impostazioni.inflationScenario,
           y,
-          initialInflationRate
+          inputs.impostazioni.tassoInflazione
         );
         let v = u.valore * Math.pow(1 + u.incr / 100, y);
         if (u.isTodayValue) v *= Math.pow(1 + i, y);
@@ -380,7 +392,7 @@ export function calcolaProiezione(
         const i = getInflationRateForYear(
           inputs.impostazioni.inflationScenario,
           y,
-          initialInflationRate
+          inputs.impostazioni.tassoInflazione
         );
         let v = u.valore * Math.pow(1 + u.incr / 100, y);
         if (u.isTodayValue) v *= Math.pow(1 + i, y);
@@ -565,7 +577,7 @@ export function calcolaSimulazioneMonteCarlo(inputs, annoInizio, annoFine) {
         true,
         null,
         annoInizio,
-        inputsCopia.impostazioni.initialCrisisOptions
+        inputs.impostazioni.initialCrisisOptions
       );
     allSimulations.push(simulations);
     if (simulazioneFallita) {

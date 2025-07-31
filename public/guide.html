@@ -609,10 +609,13 @@
           <li>
             <strong>Simulazione con Rischi:</strong> Dopo aver valutato i rischi, puoi usare il pulsante <strong>"Avvia Sim. con Rischi"</strong>. Questa speciale simulazione applicherà degli "stress test" al tuo piano basati su tutti i rischi che hai contrassegnato con impatto "Alto", mostrandoti come si comporterebbe il tuo portafoglio nello scenario peggiore.
           </li>
+<div class="usage-tip">
+    <p><strong>Nota sul Rischio Inflazione:</strong> La valutazione del rischio <strong>"Inflazione Elevata"</strong> è disabilitata (non cliccabile) se nelle "Impostazioni di Simulazione" hai già selezionato uno scenario di inflazione specifico (es. "Inflazione Alta" o "Inflazione Volatile"). Questo perché la simulazione sta già usando un modello di inflazione variabile, e non avrebbe senso aggiungere un ulteriore stress test sullo stesso fattore. La valutazione del rischio inflazione è disponibile solo quando si sceglie un tasso di inflazione fisso.</p>
+</div>
         </ul>
 
         <h4 class="text-lg font-semibold text-gray-800 mt-6 mb-2">Cosa Succede Durante la "Simulazione con Rischi"</h4>
-        <p>Quando avvii una simulazione con rischi, il programma non esegue una simulazione Monte Carlo, ma una <strong>simulazione deterministica pessimistica</strong>. Applica una serie di "stress test" al tuo piano basati <strong>solo sui rischi che hai valutato con impatto "Alto"</strong>. Ecco cosa succede nel dettaglio per ogni rischio:</p>
+        <p>Quando avvii una simulazione con rischi, il programma non esegue un tipo speciale di simulazione. Invece, <strong>modifica temporaneamente i tuoi parametri di input</strong> per riflettere gli scenari peggiori, e poi esegue la simulazione <strong>nella modalità selezionata (Deterministica, Monte Carlo o Backtest)</strong> con questi parametri "stressati". Vengono modificati solo i parametri relativi ai rischi che hai valutato con impatto "Alto". Ecco cosa succede nel dettaglio per ogni rischio:</p>
         <ul class="list-disc list-inside mt-4 space-y-2 bg-red-50 p-4 rounded-lg border border-red-200 text-red-800">
           <li><strong>Sequenza dei Rendimenti:</strong> Applica uno shock di mercato immediato, simulando un rendimento del <strong>-25%</strong> per i primi due anni della simulazione.</li>
           <li><strong>Inflazione Elevata:</strong> Aumenta il tasso di inflazione di base di <strong>1,5 punti percentuali</strong> per tutta la durata della simulazione.</li>

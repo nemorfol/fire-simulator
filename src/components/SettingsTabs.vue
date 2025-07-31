@@ -35,7 +35,7 @@ const updateModel = (newValue) => {
         />
       </tab>
       <tab title="Gestione Rischi">
-        <RiskManagementDashboard />
+        <RiskManagementDashboard :inflationScenario="props.modelValue?.inflationScenario" />
       </tab>
       <tab title="Stress Test">
         <StressTestDashboard 

@@ -19,14 +19,14 @@
             <td class="p-2 font-semibold text-gray-900" style="text-align: center;">{{ risk.name }}</td>
             <td class="p-2 text-gray-600" style="text-align: center;">{{ risk.description }}</td>
             <td class="p-2">
-              <select v-model="risk.probability" @change="updateAssessment(risk.id, 'probability', $event.target.value)" class="select-risk w-full">
+              <select v-model="risk.probability" @change="updateAssessment(risk.id, 'probability', $event.target.value)" class="select-risk w-full" :disabled="risk.id === 'inflation' && isInflationRiskDisabled">
                 <option>Basso</option>
                 <option>Medio</option>
                 <option>Alto</option>
               </select>
             </td>
             <td class="p-2">
-              <select v-model="risk.impact" @change="updateAssessment(risk.id, 'impact', $event.target.value)" class="select-risk w-full">
+              <select v-model="risk.impact" @change="updateAssessment(risk.id, 'impact', $event.target.value)" class="select-risk w-full" :disabled="risk.id === 'inflation' && isInflationRiskDisabled">
                 <option>Basso</option>
                 <option>Medio</option>
                 <option>Alto</option>
@@ -65,8 +65,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { userRiskAssessments, updateRiskAssessment } from '../services/riskService.js';
+
+const props = defineProps({
+  inflationScenario: {
+    type: String,
+    required: true,
+  },
+});
+
+console.log('[DEBUG] inflationScenario:', props.inflationScenario);
 
 const assessments = ref(userRiskAssessments);
 
@@ -90,6 +99,10 @@ const getCellColor = (prob, imp) => {
   if (prob === 'Medio' && imp === 'Medio') return '#facc15'; // bg-yellow-400
   return '#4ade80'; // bg-green-400
 };
+
+const isInflationRiskDisabled = computed(() => {
+  return props.inflationScenario !== 'none';
+});
 
 </script>
 
